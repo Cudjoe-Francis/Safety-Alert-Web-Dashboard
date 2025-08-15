@@ -16,6 +16,7 @@ import { db } from "../services/firebase";
 import AudioPlayer from "../features/alerts/AudioPlayer";
 import ReplyForm from "../features/alerts/ReplyForm";
 import LocationMap from "../features/alerts/LocationMap";
+import { auth } from "../services/firebase"; // Import auth
 
 interface EmergencyContact {
   name?: string;
@@ -66,6 +67,7 @@ const AlertDetails: React.FC = () => {
   const [alertData, setAlertData] = useState<Alert | null>(null);
   const [loading, setLoading] = useState(true);
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [serviceType, setServiceType] = useState<string | null>(null); // <-- Added state for serviceType
 
   useEffect(() => {
     if (!id) return;
@@ -99,6 +101,19 @@ const AlertDetails: React.FC = () => {
     return () => unsub();
   }, [id]);
 
+  useEffect(() => {
+    const fetchServiceType = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setServiceType(userDoc.data().serviceType);
+        }
+      }
+    };
+    fetchServiceType();
+  }, []);
+
   if (loading) return <div>Loading...</div>;
 
   if (!alertData) {
@@ -111,22 +126,36 @@ const AlertDetails: React.FC = () => {
   }
 
   return (
-    <div>
-      <button onClick={() => navigate("/")}>← Back</button>
-      <h2>Alert Details</h2>
+    <div
+      style={{
+        maxWidth: 700,
+        margin: "0 auto",
+        background: "#fff",
+        borderRadius: 12,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+        padding: 32,
+      }}
+    >
+      <button
+        onClick={() => navigate("/")}
+        style={{
+          marginBottom: 16,
+          background: "#ff5330",
+          color: "#fff",
+          border: "none",
+          borderRadius: 6,
+          padding: "8px 16px",
+          cursor: "pointer",
+        }}
+      >
+        ← Back
+      </button>
+      <h2 style={{ color: "#121a68", marginBottom: 16 }}>Alert Details</h2>
 
       {/* User Details */}
       {alertData.user && (
-        <div
-          style={{
-            margin: "16px 0",
-            background: "#fff",
-            borderRadius: 8,
-            padding: 16,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
-          }}
-        >
-          <h3>User Details</h3>
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ color: "#ff5330" }}>User Details</h3>
           <div>
             <strong>Name:</strong> {alertData.user.firstName}{" "}
             {alertData.user.middleName ? alertData.user.middleName + " " : ""}
@@ -184,16 +213,8 @@ const AlertDetails: React.FC = () => {
       {/* Emergency Contacts */}
       {alertData.emergencyContacts &&
         alertData.emergencyContacts.length > 0 && (
-          <div
-            style={{
-              margin: "16px 0",
-              background: "#fff",
-              borderRadius: 8,
-              padding: 16,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
-            }}
-          >
-            <h3>Emergency Contacts</h3>
+          <div style={{ marginBottom: 24 }}>
+            <h3 style={{ color: "#ff5330" }}>Emergency Contacts</h3>
             {alertData.emergencyContacts.map((contact, idx) => (
               <div key={idx} style={{ marginBottom: 8 }}>
                 {contact.name && (
@@ -241,27 +262,29 @@ const AlertDetails: React.FC = () => {
         />
       )}
       {alertData.audioUrl && <AudioPlayer audioUrl={alertData.audioUrl} />}
-      <ReplyForm
-        onSend={async (reply) => {
-          if (!id) return;
-          try {
-            await addDoc(collection(db, "alerts", id, "replies"), {
-              responderName: reply.responderName,
-              station: reply.station,
-              message: reply.message,
-              createdAt: serverTimestamp(),
-              alertId: id,
-            });
-            alert(
-              `Reply sent and saved to ${alertData?.user?.firstName ?? ""} ${
-                alertData?.user?.lastName ?? ""
-              }!`
-            );
-          } catch (error) {
-            alert("Failed to send reply: " + (error as Error).message);
-          }
-        }}
-      />
+      {serviceType === alertData.serviceType && (
+        <ReplyForm
+          onSend={async (reply) => {
+            if (!id) return;
+            try {
+              await addDoc(collection(db, "alerts", id, "replies"), {
+                responderName: reply.responderName,
+                station: reply.station,
+                message: reply.message,
+                createdAt: serverTimestamp(),
+                alertId: id,
+              });
+              alert(
+                `Reply sent and saved to ${alertData?.user?.firstName ?? ""} ${
+                  alertData?.user?.lastName ?? ""
+                }!`
+              );
+            } catch (error) {
+              alert("Failed to send reply: " + (error as Error).message);
+            }
+          }}
+        />
+      )}
       <div style={{ marginTop: 32 }}>
         <h3>Replies</h3>
         {replies.length === 0 && <div>No replies yet.</div>}

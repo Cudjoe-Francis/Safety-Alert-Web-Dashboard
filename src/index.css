@@ -84,21 +84,55 @@ button:focus-visible {
 }
 
 @media (max-width: 900px) {
-  .sidebar {
-    width: 100vw !important;
-    min-width: 0 !important;
-    border-right: none !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07) !important;
-    padding: 1rem !important;
-    height: auto !important;
-    position: static !important;
+  .alert-card,
+  .history-table,
+  .details-card {
+    padding: 12px !important;
+    font-size: 15px !important;
+    min-width: 100vw !important;
   }
   main {
     padding: 1rem !important;
   }
-  .alert-card {
-    padding: 12px !important;
-    font-size: 15px !important;
-  }
+}
+
+/* //////////////////////////////////////////////////////// */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #f8ead6ff; /* Changed background color */
+  color: #333;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: #fff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid #ddd;
+  margin-top: 0;
+  border-radius: 8px;
+}
+
+.sidebar li {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.sidebar li:hover {
+  background-color: #ff5530;  /* Changed hover color */
+  color: #fff;
+}
+
+
+
+
+
+.sidebar li:last-child {
+  border-bottom: none;
 }
