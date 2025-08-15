@@ -1,0 +1,16 @@
+export const theme = {
+  primary: "#ff5330",
+  primaryDark: "#c13b1a",
+  accent: "#121a68",
+  background: "#f7f8fa",
+  card: "#fff",
+  text: "#222",
+  textLight: "#fff",
+  muted: "#888",
+  border: "#e0e0e0",
+  success: "#008000",
+  warning: "#ffb300",
+  danger: "#e53935",
+  info: "#5d3fd3",
+  shadow: "rgba(0,0,0,0.07)",
+};
