@@ -248,8 +248,10 @@ const AlertDetails: React.FC = () => {
           ? (alertData.time as Timestamp).toDate().toLocaleString()
           : alertData.time}
       </div>
-      <div>
-        <strong>Location:</strong> {alertData.location}
+      <div
+      >
+        <strong>Location:</strong>
+        <span style={{ marginLeft: 6 }}>{alertData.location}</span>
       </div>
       <div>
         <strong>Message:</strong> {alertData.message}

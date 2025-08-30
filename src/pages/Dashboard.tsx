@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../services/firebase";
+import { db } from "../services/firebase";
 import {
   collection,
-  doc,
-  getDoc,
+  // doc,
+  // getDoc,
   onSnapshot,
   query,
   where,
   Timestamp,
 } from "firebase/firestore";
-import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
+// import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 
 interface EmergencyContact {
   name?: string;
@@ -54,13 +54,13 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "alerts"), (snapshot) => {
-  setAlerts(
-    snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Alert),
-    }))
-  );
-});
+      setAlerts(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Alert),
+        }))
+      );
+    });
     return () => unsub();
   }, []);
 
@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-      console.log("serviceType:", serviceType); // Add this line
+    console.log("serviceType:", serviceType); // Add this line
     if (!serviceType) return;
     const q = query(
       collection(db, "alerts"),
@@ -87,7 +87,8 @@ const Dashboard: React.FC = () => {
     return () => unsub();
   }, [serviceType]);
 
-const responderServiceType = serviceType;  const filteredAlerts = alerts.filter(
+  const responderServiceType = serviceType;
+  const filteredAlerts = alerts.filter(
     (alert) => alert.serviceType === responderServiceType
   );
 
@@ -131,8 +132,17 @@ const responderServiceType = serviceType;  const filteredAlerts = alerts.filter(
             >
               {item.serviceType}
             </div>
-            <div style={{ color: "#222", fontSize: 14, marginBottom: 8 }}>
-              {item.location}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                color: "#444",
+                fontSize: 15,
+                marginBottom: 12,
+                gap: 6,
+              }}
+            >
+              <span>{item.location}</span>
             </div>
             <div style={{ color: "#888", fontSize: 13 }}>
               {typeof item.time === "object" && "toDate" in item.time
