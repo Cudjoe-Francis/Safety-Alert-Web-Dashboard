@@ -25,7 +25,7 @@ a:hover {
 body {
   margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
-  background: #f7f8fa;
+  background: #f8faf7;
 }
 
 h1 {
@@ -96,13 +96,12 @@ button:focus-visible {
   }
 }
 
-/* //////////////////////////////////////////////////////// */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
   height: 100%;
-  background-color: #f8ead6ff; /* Changed background color */
+  background-color: rgb(7, 180, 62); /* Changed background color */
   color: #333;
   overflow-y: auto;
   z-index: 1000;
@@ -120,19 +119,41 @@ button:focus-visible {
 }
 
 .sidebar li {
-  padding: 1rem;
   border-bottom: 1px solid #ddd;
+  border-radius: 8px;
 }
 
-.sidebar li:hover {
-  background-color: #ff5530;  /* Changed hover color */
-  color: #fff;
+.sidebar li:hover
+/* .sidebar li:active  */
+{
+  background-color: #f7a696; /* Changed hover color */
+  color: #fff !important;
 }
 
+.sidebar-link {
+  transition: background 0.18s, color 0.18s;
+  padding: 1rem !important;
+}
 
-
-
+.sidebar-link.active
+/* ,.sidebar-link:hover  */
+{
+  background: #ff5330;
+  color: #fff !important;
+}
+.sidebar-title {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
 
 .sidebar li:last-child {
   border-bottom: none;
 }
+
+.alert-card:hover {
+  box-shadow: 0 8px 32px rgba(255, 83, 48, 0.18);
+  transform: translateY(-2px) scale(1.02);
+  border-color: #121a68;
+}
+

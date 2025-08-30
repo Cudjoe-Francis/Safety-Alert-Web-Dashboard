@@ -1,6 +1,14 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
-import { auth } from "./services/firebase";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  NavLink,
+} from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
+import { db, auth } from "./services/firebase";
 import Dashboard from "./pages/Dashboard";
 import AlertDetails from "./pages/AlertDetails";
 import History from "./pages/History";
@@ -19,9 +27,49 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [serviceType, setServiceType] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchServiceType = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setServiceType(userDoc.data().serviceType);
+          localStorage.setItem("serviceType", userDoc.data().serviceType);
+        } else {
+          setServiceType(null);
+          localStorage.removeItem("serviceType");
+        }
+      } else {
+        setServiceType(null);
+        localStorage.removeItem("serviceType");
+      }
+    };
+
+    // Listen for auth state changes
+    const unsubscribe = auth.onAuthStateChanged(() => {
+      fetchServiceType();
+    });
+
+    // Initial fetch
+    fetchServiceType();
+
+    return () => unsubscribe();
+  }, []);
+
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     auth.signOut();
     window.location.href = "/signin";
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   return (
@@ -46,7 +94,7 @@ const App: React.FC = () => {
                   style={{
                     width: 220,
                     minWidth: 180,
-                    background: "#f8ead6ff",////////////////////
+                    background: "#fff",
                     borderRight: `1px solid ${theme.border}`,
                     padding: "2rem 1rem",
                     boxShadow: `2px 0 8px ${theme.shadow}`,
@@ -56,37 +104,109 @@ const App: React.FC = () => {
                   }}
                   className="sidebar"
                 >
-                  <h1 style={{ color: theme.primary, fontSize: 24, marginBottom: 32 }}
-                  className="sidebar-title">
-                    Safety Alert
+                  <h1
+                    style={{
+                      color: theme.primary,
+                      fontSize: 18,
+                      marginBottom: 12,
+                    }}
+                    className="sidebar-title"
+                  >
+                    Safety Alert Dashboard
                   </h1>
+                  {serviceType && (
+                    <div
+                      style={{
+                        // background: "#f7a696",
+                        color: "#121a68",
+                        fontWeight: 600,
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                        marginBottom: 24,
+                        fontSize: 15,
+                        boxShadow: "0 2px 8px rgba(255,83,48,0.07)",
+                        textAlign: "center",
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      Signed in as{" "}
+                      <span style={{ textTransform: "capitalize" }}>
+                        {serviceType}
+                      </span>
+                    </div>
+                  )}
                   <ul style={{ listStyle: "none", padding: 0 }}>
                     <li>
-                      <Link to="/" style={{ color: theme.text, textDecoration: "none" }}>
+                      <NavLink
+                        to="/"
+                        end
+                        className={({ isActive }) =>
+                          isActive ? "sidebar-link active" : "sidebar-link"
+                        }
+                        style={{
+                          color: theme.text,
+                          textDecoration: "none",
+                          fontWeight: 600,
+                          padding: "10px 0",
+                          display: "block",
+                          borderRadius: 8,
+                        }}
+                      >
                         Dashboard
-                      </Link>
+                      </NavLink>
                     </li>
                     <li>
-                      <Link to="/history" style={{ color: theme.text, textDecoration: "none" }}>
+                      <NavLink
+                        to="/history"
+                        className={({ isActive }) =>
+                          isActive ? "sidebar-link active" : "sidebar-link"
+                        }
+                        style={{
+                          color: theme.text,
+                          textDecoration: "none",
+                          fontWeight: 600,
+                          padding: "10px 0",
+                          display: "block",
+                          borderRadius: 8,
+                        }}
+                      >
                         History
-                      </Link>
+                      </NavLink>
                     </li>
-                    <li>
-                      <Link to="/incident-reports" style={{ color: theme.text, textDecoration: "none" }}>
+
+                    {/* Hide Incident Reports */}
+                    {/* <li>
+                      <NavLink
+                        to="/incident-reports"
+                        className={({ isActive }) =>
+                          isActive ? "sidebar-link active" : "sidebar-link"
+                        }
+                        style={{
+                          color: theme.text,
+                          textDecoration: "none",
+                          fontWeight: 600,
+                          padding: "10px 0",
+                          display: "block",
+                          borderRadius: 8,
+                        }}
+                      >
                         Incident Reports
-                      </Link>
-                    </li>
+                      </NavLink>
+                    </li> */}
                   </ul>
                   <button
                     onClick={handleLogout}
                     style={{
                       marginTop: 32,
-                      background: "#e53935",
+                      background: "red",
                       color: "#fff",
                       border: "none",
                       borderRadius: 6,
                       padding: "8px 16px",
                       cursor: "pointer",
+                      fontWeight: 600,
+                      fontSize: 16,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
                     }}
                   >
                     Logout
@@ -98,9 +218,78 @@ const App: React.FC = () => {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/alert/:id" element={<AlertDetails />} />
                     <Route path="/history" element={<History />} />
-                    <Route path="/incident-reports" element={<IncidentReports />} />
+                    <Route
+                      path="/incident-reports"
+                      element={<IncidentReports />}
+                    />
                   </Routes>
                 </main>
+                {/* Logout Confirmation Modal */}
+                {showLogoutModal && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: 0,
+                      left: 0,
+                      width: "100vw",
+                      height: "100vh",
+                      background: "rgba(0,0,0,0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 2000,
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: "#fff",
+                        padding: "32px 24px",
+                        borderRadius: 12,
+                        boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+                        textAlign: "center",
+                        minWidth: 320,
+                      }}
+                    >
+                      <h3 style={{ marginBottom: 18, color: "#121a68" }}>
+                        Confirm Logout
+                      </h3>
+                      <p style={{ marginBottom: 24 }}>
+                        Are you sure you want to logout?
+                      </p>
+                      <button
+                        onClick={confirmLogout}
+                        style={{
+                          background: "#ff5330",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 6,
+                          padding: "8px 24px",
+                          fontWeight: 600,
+                          fontSize: 16,
+                          marginRight: 12,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Logout
+                      </button>
+                      <button
+                        onClick={cancelLogout}
+                        style={{
+                          background: "#e0e0e0",
+                          color: "#121a68",
+                          border: "none",
+                          borderRadius: 6,
+                          padding: "8px 24px",
+                          fontWeight: 600,
+                          fontSize: 16,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Stay Signed In
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </RequireAuth>
           }

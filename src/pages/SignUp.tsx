@@ -57,7 +57,7 @@ const SignUp: React.FC = () => {
       >
         <h2
           style={{
-            color: "#121a68",
+            color: "#ff5330",
             marginBottom: 24,
             textAlign: "center",
           }}

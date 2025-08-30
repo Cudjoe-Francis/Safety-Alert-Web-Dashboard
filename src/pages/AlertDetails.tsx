@@ -150,7 +150,6 @@ const AlertDetails: React.FC = () => {
       >
         ← Back
       </button>
-      <h2 style={{ color: "#121a68", marginBottom: 16 }}>Alert Details</h2>
 
       {/* User Details */}
       {alertData.user && (
@@ -250,7 +249,7 @@ const AlertDetails: React.FC = () => {
       </div>
       <div
       >
-        <strong>Location:</strong>
+        <strong>Current Location:</strong>
         <span style={{ marginLeft: 6 }}>{alertData.location}</span>
       </div>
       <div>
