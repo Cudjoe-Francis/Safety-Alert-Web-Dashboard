@@ -92,50 +92,79 @@ const App: React.FC = () => {
                 {/* Sidebar */}
                 <nav
                   style={{
-                    width: 220,
+                    width: 240,
+                    overflowX: "hidden",
                     minWidth: 180,
-                    background: "#fff",
-                    borderRight: `1px solid ${theme.border}`,
-                    padding: "2rem 1rem",
-                    boxShadow: `2px 0 8px ${theme.shadow}`,
+                    color: "#fff",
+                    borderRight: "none",
+                    padding: "2.5rem 1.5rem",
+                    boxShadow: "2px 0 16px rgba(0,0,0,0.08)",
                     height: "100vh",
                     position: "sticky",
                     top: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    zIndex: 1000,
                   }}
                   className="sidebar"
                 >
-                  <h1
+                  <div
                     style={{
-                      color: theme.primary,
-                      fontSize: 18,
-                      marginBottom: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: 24,
                     }}
-                    className="sidebar-title"
                   >
-                    Safety Alert Dashboard
-                  </h1>
+                    <img
+                      src="/vite.svg"
+                      alt="Logo"
+                      style={{
+                        width: 38,
+                        height: 38,
+                        marginRight: 12,
+                        borderRadius: 8,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.09)",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 22,
+                        // fontWeight: 700,
+                        // letterSpacing: 1,
+                        // color: "#000",
+                        // fontFamily: "Segoe UI, Arial, sans-serif",
+                      }}
+                      className="sidebar-title"
+                    >
+                      Safety Alert
+                    </span>
+                  </div>
                   {serviceType && (
                     <div
                       style={{
-                        // background: "#f7a696",
-                        color: "#121a68",
+                        background: "rgba(255,255,255,0.12)",
+                        color: "#000",
                         fontWeight: 600,
                         borderRadius: 8,
                         padding: "8px 12px",
-                        marginBottom: 24,
+                        marginBottom: 28,
                         fontSize: 15,
                         boxShadow: "0 2px 8px rgba(255,83,48,0.07)",
                         textAlign: "center",
                         letterSpacing: 0.5,
+                        width: "100%",
                       }}
                     >
-                      Signed in as{" "}
-                      <span style={{ textTransform: "capitalize" }}>
+                      <span style={{ opacity: 0.8 }}>Signed in as</span>{" "}
+                      <span
+                        style={{ textTransform: "capitalize", fontWeight: 700 }}
+                      >
                         {serviceType}
                       </span>
                     </div>
                   )}
-                  <ul style={{ listStyle: "none", padding: 0 }}>
+                  <ul style={{ listStyle: "none", padding: 0, width: "100%" }}>
                     <li>
                       <NavLink
                         to="/"
@@ -144,14 +173,21 @@ const App: React.FC = () => {
                           isActive ? "sidebar-link active" : "sidebar-link"
                         }
                         style={{
-                          color: theme.text,
+                          // color: "#fff",
                           textDecoration: "none",
                           fontWeight: 600,
-                          padding: "10px 0",
-                          display: "block",
+                          padding: "12px 0",
+                          display: "flex",
+                          alignItems: "center",
                           borderRadius: 8,
+                          marginBottom: 8,
+                          fontSize: 17,
+                          transition: "background 0.18s, color 0.18s",
                         }}
                       >
+                        <span style={{ marginRight: 10, fontSize: 18 }}>
+                          🏠
+                        </span>
                         Dashboard
                       </NavLink>
                     </li>
@@ -162,19 +198,26 @@ const App: React.FC = () => {
                           isActive ? "sidebar-link active" : "sidebar-link"
                         }
                         style={{
-                          color: theme.text,
+                          // color: "#fff",
                           textDecoration: "none",
                           fontWeight: 600,
-                          padding: "10px 0",
-                          display: "block",
+                          padding: "12px 0",
+                          display: "flex",
+                          alignItems: "center",
                           borderRadius: 8,
+                          marginBottom: 8,
+                          fontSize: 17,
+                          transition: "background 0.18s, color 0.18s",
                         }}
                       >
+                        <span style={{ marginRight: 10, fontSize: 18 }}>
+                          📜
+                        </span>
                         History
                       </NavLink>
                     </li>
 
-                    {/* Hide Incident Reports */}
+                    {/* Uncomment if you want Incident Reports */}
                     {/* <li>
                       <NavLink
                         to="/incident-reports"
@@ -182,14 +225,19 @@ const App: React.FC = () => {
                           isActive ? "sidebar-link active" : "sidebar-link"
                         }
                         style={{
-                          color: theme.text,
+                          color: "#fff",
                           textDecoration: "none",
                           fontWeight: 600,
-                          padding: "10px 0",
-                          display: "block",
+                          padding: "12px 0",
+                          display: "flex",
+                          alignItems: "center",
                           borderRadius: 8,
+                          marginBottom: 8,
+                          fontSize: 17,
+                          transition: "background 0.18s, color 0.18s",
                         }}
                       >
+                        <span style={{ marginRight: 10, fontSize: 18 }}>🚨</span>
                         Incident Reports
                       </NavLink>
                     </li> */}
@@ -197,16 +245,19 @@ const App: React.FC = () => {
                   <button
                     onClick={handleLogout}
                     style={{
-                      marginTop: 32,
-                      background: "red",
+                      marginTop: "auto",
+                      background: "#ff5330",
                       color: "#fff",
                       border: "none",
-                      borderRadius: 6,
-                      padding: "8px 16px",
+                      borderRadius: 8,
+                      padding: "10px 24px",
                       cursor: "pointer",
-                      fontWeight: 600,
+                      fontWeight: 700,
                       fontSize: 16,
                       boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
+                      alignSelf: "center",
+                      marginBottom: 12,
+                      transition: "background 0.18s",
                     }}
                   >
                     Logout
