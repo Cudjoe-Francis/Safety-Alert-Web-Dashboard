@@ -8,7 +8,7 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { addDoc, serverTimestamp } from "firebase/firestore";
+import { addDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 
 interface IncidentReport {
   id: string;
@@ -21,7 +21,7 @@ interface IncidentReport {
     // ...add other user fields as needed
   };
   serviceType: string;
-  time: string;
+  time: string | Timestamp;
   location: string;
   description?: string;
   emergencyContacts?: {
@@ -88,8 +88,10 @@ const IncidentReports: React.FC = () => {
           </div>
           <div style={{ color: "#222", fontSize: 14 }}>{report.location}</div>
           <div style={{ color: "#888", fontSize: 13 }}>
-            {typeof report.time === "object" && "toDate" in report.time
-              ? report.time.toDate().toLocaleString()
+            {typeof report.time === "object" &&
+            report.time &&
+            "toDate" in report.time
+              ? (report.time as Timestamp).toDate().toLocaleString()
               : report.time}
           </div>
           <div style={{ marginTop: 12 }}>

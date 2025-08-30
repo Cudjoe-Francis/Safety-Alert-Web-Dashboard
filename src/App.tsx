@@ -15,7 +15,7 @@ import History from "./pages/History";
 import IncidentReports from "./pages/IncidentReports";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
-import { theme } from "./theme";
+import logoImg from "./assets/Safety_Alert_App_Logo.jpg";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -117,14 +117,17 @@ const App: React.FC = () => {
                     }}
                   >
                     <img
-                      src="/vite.svg"
-                      alt="Logo"
+                      src={logoImg}
+                      alt="Safety Alert Logo"
                       style={{
-                        width: 38,
-                        height: 38,
+                        width: 48,
+                        height: 48,
                         marginRight: 12,
-                        borderRadius: 8,
+                        borderRadius: "50%",
+                        border: "3px solid #ff5330", // Optional: adds a colored border
                         boxShadow: "0 2px 8px rgba(0,0,0,0.09)",
+                        objectFit: "cover", // Ensures the image fills the circle
+                        background: "#fff", // Optional: fallback background
                       }}
                     />
                     <span

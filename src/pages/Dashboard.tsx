@@ -56,8 +56,8 @@ const Dashboard: React.FC = () => {
     const unsub = onSnapshot(collection(db, "alerts"), (snapshot) => {
       setAlerts(
         snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...(doc.data() as Alert),
+          id: doc.id,
         }))
       );
     });
@@ -79,8 +79,8 @@ const Dashboard: React.FC = () => {
     const unsub = onSnapshot(q, (snapshot) => {
       setAlerts(
         snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...(doc.data() as Alert),
+          id: doc.id,
         }))
       );
     });
