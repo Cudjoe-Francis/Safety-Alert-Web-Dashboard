@@ -16,13 +16,28 @@ import IncidentReports from "./pages/IncidentReports";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import logoImg from "./assets/Safety_Alert_App_Logo.jpg";
+import { onAuthStateChanged, User } from "firebase/auth";
 
+// ✅ RequireAuth with proper state handling
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const user = auth.currentUser;
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+
   if (!user) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
+
   return <>{children}</>;
 };
 
@@ -31,8 +46,7 @@ const App: React.FC = () => {
   const [serviceType, setServiceType] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchServiceType = async () => {
-      const user = auth.currentUser;
+    let unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
@@ -46,17 +60,9 @@ const App: React.FC = () => {
         setServiceType(null);
         localStorage.removeItem("serviceType");
       }
-    };
-
-    // Listen for auth state changes
-    const unsubscribe = auth.onAuthStateChanged(() => {
-      fetchServiceType();
     });
 
-    // Initial fetch
-    fetchServiceType();
-
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   const handleLogout = () => {
@@ -124,19 +130,15 @@ const App: React.FC = () => {
                         height: 48,
                         marginRight: 12,
                         borderRadius: "50%",
-                        border: "3px solid #ff5330", // Optional: adds a colored border
+                        border: "3px solid #ff5330",
                         boxShadow: "0 2px 8px rgba(0,0,0,0.09)",
-                        objectFit: "cover", // Ensures the image fills the circle
-                        background: "#fff", // Optional: fallback background
+                        objectFit: "cover",
+                        background: "#fff",
                       }}
                     />
                     <span
                       style={{
                         fontSize: 22,
-                        // fontWeight: 700,
-                        // letterSpacing: 1,
-                        // color: "#000",
-                        // fontFamily: "Segoe UI, Arial, sans-serif",
                       }}
                       className="sidebar-title"
                     >
@@ -176,7 +178,6 @@ const App: React.FC = () => {
                           isActive ? "sidebar-link active" : "sidebar-link"
                         }
                         style={{
-                          // color: "#fff",
                           textDecoration: "none",
                           fontWeight: 600,
                           padding: "12px 0",
@@ -188,9 +189,7 @@ const App: React.FC = () => {
                           transition: "background 0.18s, color 0.18s",
                         }}
                       >
-                        <span style={{ marginRight: 10, fontSize: 18 }}>
-                          🏠
-                        </span>
+                        <span style={{ marginRight: 10, fontSize: 18 }}>🏠</span>
                         Dashboard
                       </NavLink>
                     </li>
@@ -201,7 +200,6 @@ const App: React.FC = () => {
                           isActive ? "sidebar-link active" : "sidebar-link"
                         }
                         style={{
-                          // color: "#fff",
                           textDecoration: "none",
                           fontWeight: 600,
                           padding: "12px 0",
@@ -213,37 +211,10 @@ const App: React.FC = () => {
                           transition: "background 0.18s, color 0.18s",
                         }}
                       >
-                        <span style={{ marginRight: 10, fontSize: 18 }}>
-                          📜
-                        </span>
+                        <span style={{ marginRight: 10, fontSize: 18 }}>📜</span>
                         History
                       </NavLink>
                     </li>
-
-                    {/* Uncomment if you want Incident Reports */}
-                    {/* <li>
-                      <NavLink
-                        to="/incident-reports"
-                        className={({ isActive }) =>
-                          isActive ? "sidebar-link active" : "sidebar-link"
-                        }
-                        style={{
-                          color: "#fff",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                          padding: "12px 0",
-                          display: "flex",
-                          alignItems: "center",
-                          borderRadius: 8,
-                          marginBottom: 8,
-                          fontSize: 17,
-                          transition: "background 0.18s, color 0.18s",
-                        }}
-                      >
-                        <span style={{ marginRight: 10, fontSize: 18 }}>🚨</span>
-                        Incident Reports
-                      </NavLink>
-                    </li> */}
                   </ul>
                   <button
                     onClick={handleLogout}
@@ -278,7 +249,7 @@ const App: React.FC = () => {
                     />
                   </Routes>
                 </main>
-                {/* Logout Confirmation Modal */}
+                {/* Logout Modal */}
                 {showLogoutModal && (
                   <div
                     style={{
