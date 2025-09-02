@@ -162,7 +162,12 @@ const Dashboard: React.FC = () => {
                 }}
               >
                 <span style={{ fontWeight: 500 }}>
-                  <strong>Current Location:</strong> {item.location}
+                  <strong>Current Location:</strong>{" "}
+                  {typeof item.location === "string"
+                    ? item.location
+                    : `${item.location?.address ?? ""} (${
+                        item.location?.lat ?? ""
+                      }, ${item.location?.lng ?? ""})`}
                 </span>
               </div>
               <div style={{ color: "#888", fontSize: 13 }}>

@@ -15,7 +15,6 @@ import History from "./pages/History";
 import IncidentReports from "./pages/IncidentReports";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
-import { theme } from "./theme";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();

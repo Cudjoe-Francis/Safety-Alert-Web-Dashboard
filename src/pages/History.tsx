@@ -122,13 +122,10 @@ const History: React.FC = () => {
                   ? alert.time.toDate().toLocaleString()
                   : alert.time}
               </td>
-              <td
-                style={{
-                  border: `1px solid #e0e0e0`,
-                  padding: 12,
-                }}
-              >
-                {alert.location}
+              <td style={{ border: `1px solid #e0e0e0`, padding: 12 }}>
+                {typeof alert.location === "string"
+                  ? alert.location
+                  : alert.location?.address}
               </td>
               <td
                 style={{
