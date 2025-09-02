@@ -7,6 +7,7 @@ import {
   onSnapshot,
   doc,
   getDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { addDoc, serverTimestamp } from "firebase/firestore";
 
@@ -88,8 +89,10 @@ const IncidentReports: React.FC = () => {
           </div>
           <div style={{ color: "#222", fontSize: 14 }}>{report.location}</div>
           <div style={{ color: "#888", fontSize: 13 }}>
-            {typeof report.time === "object" && "toDate" in report.time
-              ? report.time.toDate().toLocaleString()
+            {typeof report.time === "object" &&
+            report.time &&
+            "toDate" in report.time
+              ? (report.time as Timestamp).toDate().toLocaleString()
               : report.time}
           </div>
           <div style={{ marginTop: 12 }}>

@@ -12,6 +12,12 @@ import {
 } from "firebase/firestore";
 // import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 
+interface Location {
+  address?: string;
+  lat?: number;
+  lng?: number;
+}
+
 interface EmergencyContact {
   name?: string;
   relationship?: string;
@@ -38,7 +44,7 @@ interface Alert {
   userName: string;
   serviceType: string;
   time: string | Timestamp; // allow both string and Timestamp
-  location: string;
+  location: string | Location;
   message?: string;
   audioUrl?: string;
   lat?: number;
@@ -56,8 +62,8 @@ const Dashboard: React.FC = () => {
     const unsub = onSnapshot(collection(db, "alerts"), (snapshot) => {
       setAlerts(
         snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...(doc.data() as Alert),
+          id: doc.id,
         }))
       );
     });
@@ -79,8 +85,8 @@ const Dashboard: React.FC = () => {
     const unsub = onSnapshot(q, (snapshot) => {
       setAlerts(
         snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...(doc.data() as Alert),
+          id: doc.id,
         }))
       );
     });

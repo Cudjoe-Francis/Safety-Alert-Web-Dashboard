@@ -1,15 +1,15 @@
-
 import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
-import { Link, Router, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
+import Popup from "../components/Popup";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [popupMsg, setPopupMsg] = useState("");
   const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -26,7 +26,16 @@ const SignIn: React.FC = () => {
       }
       navigate("/");
     } catch (err: any) {
-      setError(err.message);
+      // console.log(err); // <-- Add this line
+      if (err.code === "auth/user-not-found") {
+        setPopupMsg("No account found with this email.");
+      } else if (err.code === "auth/wrong-password") {
+        setPopupMsg("Incorrect password. Please try again.");
+      } else if (err.code === "auth/invalid-email") {
+        setPopupMsg("Please enter a valid email address.");
+      } else {
+        setPopupMsg("Sign in failed. Please try again.");
+      }
     }
   };
 
@@ -108,7 +117,6 @@ const SignIn: React.FC = () => {
             fontSize: 16,
           }}
         />
-        {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
         <button
           type="submit"
           style={{
@@ -132,6 +140,7 @@ const SignIn: React.FC = () => {
           </Link>
         </div>
       </form>
+      {popupMsg && <Popup message={popupMsg} onClose={() => setPopupMsg("")} />}
     </div>
   );
 };

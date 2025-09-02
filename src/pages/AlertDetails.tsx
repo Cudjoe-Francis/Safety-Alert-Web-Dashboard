@@ -39,12 +39,18 @@ interface UserDetails {
   allergies?: string;
 }
 
+interface Location {
+  address?: string;
+  lat?: number;
+  lng?: number;
+}
+
 interface Alert {
   id: string;
   userName: string;
   serviceType: string;
   time: string | Timestamp;
-  location: string;
+  location: string | Location;
   message?: string;
   audioUrl?: string;
   lat?: number;
@@ -258,13 +264,15 @@ const AlertDetails: React.FC = () => {
       <div>
         <strong>Message:</strong> {alertData.message}
       </div>
-      {alertData.lat && alertData.lng && (
-        <LocationMap
-          lat={alertData.lat}
-          lng={alertData.lng}
-          label={alertData.location}
-        />
-      )}
+      {typeof alertData.location === "object" &&
+        typeof alertData.location.lat === "number" &&
+        typeof alertData.location.lng === "number" && (
+          <LocationMap
+            lat={alertData.location.lat}
+            lng={alertData.location.lng}
+            label={alertData.location.address ?? ""}
+          />
+        )}
       {alertData.audioUrl && <AudioPlayer audioUrl={alertData.audioUrl} />}
       {serviceType === alertData.serviceType && (
         <ReplyForm

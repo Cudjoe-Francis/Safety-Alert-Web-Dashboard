@@ -1,10 +1,10 @@
-
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { Link, useNavigate } from "react-router-dom";
+import Popup from "../components/Popup";
 
 const serviceTypes = ["Police", "Hospital", "Fire", "Campus"];
 
@@ -12,7 +12,7 @@ const SignUp: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [serviceType, setServiceType] = useState(serviceTypes[0]);
-  const [error, setError] = useState("");
+  const [popupMsg, setPopupMsg] = useState("");
   const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -30,7 +30,19 @@ const SignUp: React.FC = () => {
       localStorage.setItem("serviceType", serviceType); // Store service type in localStorage
       navigate("/"); // Use navigate instead of window.location.href
     } catch (err: any) {
-      setError(err.message);
+      // Firebase error codes: https://firebase.google.com/docs/reference/js/auth.md#autherrorcodes
+      if (err.code === "auth/email-already-in-use") {
+        setPopupMsg(
+          "This email is already registered. Please sign in or use another email."
+        );
+      } else if (err.code === "auth/invalid-email") {
+        setPopupMsg("Please enter a valid email address.");
+      } else if (err.code === "auth/weak-password") {
+        setPopupMsg("Password should be at least 6 characters.");
+      } 
+      else {
+        setPopupMsg("Sign up failed. Please try again.");
+      }
     }
   };
 
@@ -139,7 +151,6 @@ const SignUp: React.FC = () => {
             fontSize: 16,
           }}
         />
-        {error && <div style={{ color: "red", marginBottom: 12 }}>{error}</div>}
         <button
           type="submit"
           style={{
@@ -163,6 +174,7 @@ const SignUp: React.FC = () => {
           </Link>
         </div>
       </form>
+      {popupMsg && <Popup message={popupMsg} onClose={() => setPopupMsg("")} />}
     </div>
   );
 };

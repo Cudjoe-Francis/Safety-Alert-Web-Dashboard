@@ -1,13 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../services/firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  Timestamp,
+} from "firebase/firestore";
+
+interface Location {
+  address?: string;
+  lat?: number;
+  lng?: number;
+}
 
 interface Alert {
   id: string;
   userName: string;
   serviceType: string;
-  time: string;
-  location: string;
+  time: string | Timestamp;
+  location: string | Location;
   message?: string;
 }
 
@@ -29,8 +41,8 @@ const History: React.FC = () => {
     const unsub = onSnapshot(q, (snapshot) => {
       setAlerts(
         snapshot.docs.map((doc) => ({
-          id: doc.id,
           ...(doc.data() as Alert),
+          id: doc.id,
         }))
       );
     });
@@ -118,8 +130,10 @@ const History: React.FC = () => {
                   padding: 12,
                 }}
               >
-                {typeof alert.time === "object" && "toDate" in alert.time
-                  ? alert.time.toDate().toLocaleString()
+                {typeof alert.time === "object" &&
+                alert.time &&
+                "toDate" in alert.time
+                  ? (alert.time as Timestamp).toDate().toLocaleString()
                   : alert.time}
               </td>
               <td style={{ border: `1px solid #e0e0e0`, padding: 12 }}>
