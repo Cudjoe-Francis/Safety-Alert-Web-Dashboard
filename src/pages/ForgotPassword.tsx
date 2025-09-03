@@ -51,7 +51,7 @@ const ForgotPassword: React.FC = () => {
       >
         <h2
           style={{
-            color: "#ff5330",
+            color: "#121a68",
             marginBottom: 24,
             textAlign: "center",
           }}

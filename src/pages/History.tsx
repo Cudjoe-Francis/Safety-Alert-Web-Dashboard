@@ -50,109 +50,155 @@ const History: React.FC = () => {
   }, [serviceType]);
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <h2 style={{ color: "#121a68", marginBottom: 24 }}>Alert History</h2>
-      <table
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "1rem" }}>
+      <h2
         style={{
-          width: "100%",
-          overflowX: "auto",
-          display: "block",
-          borderRadius: 8,
-          boxSizing: "border-box",
+          color: "#121a68",
+          marginBottom: 24,
+          fontSize: "1.3em",
+          marginTop: 56, // Add this line for spacing below menu bar
         }}
       >
-        <thead>
-          <tr style={{ background: "#f7f8fa" }}>
-            <th
-              style={{
-                border: `1px solid #e0e0e0`,
-                padding: 12,
-              }}
-            >
-              User
-            </th>
-            <th
-              style={{
-                border: `1px solid #e0e0e0`,
-                padding: 12,
-              }}
-            >
-              Service
-            </th>
-            <th
-              style={{
-                border: `1px solid #e0e0e0`,
-                padding: 12,
-              }}
-            >
-              Time
-            </th>
-            <th
-              style={{
-                border: `1px solid #e0e0e0`,
-                padding: 12,
-              }}
-            >
-              Location
-            </th>
-            <th
-              style={{
-                border: `1px solid #e0e0e0`,
-                padding: 12,
-              }}
-            >
-              Message
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {alerts.map((alert) => (
-            <tr key={alert.id}>
-              <td
+        Alert History
+      </h2>
+      {/* Desktop Table */}
+      <div
+        className="alert-history-table-container"
+        style={{ display: "none" }}
+      >
+        <table
+          className="alert-history-table"
+          style={{
+            width: "100%",
+            minWidth: 600,
+            borderCollapse: "collapse",
+            fontSize: "1em",
+          }}
+        >
+          <thead>
+            <tr style={{ background: "#f7f8fa" }}>
+              <th
                 style={{
-                  border: `1px solid #e0e0e0`,
+                  border: "1px solid #e0e0e0",
                   padding: 12,
+                  fontWeight: 600,
                 }}
               >
-                {alert.userName}
-              </td>
-              <td
+                User
+              </th>
+              <th
                 style={{
-                  border: `1px solid #e0e0e0`,
+                  border: "1px solid #e0e0e0",
                   padding: 12,
+                  fontWeight: 600,
                 }}
               >
-                {alert.serviceType}
-              </td>
-              <td
+                Service
+              </th>
+              <th
                 style={{
-                  border: `1px solid #e0e0e0`,
+                  border: "1px solid #e0e0e0",
                   padding: 12,
+                  fontWeight: 600,
                 }}
               >
-                {typeof alert.time === "object" &&
-                alert.time &&
-                "toDate" in alert.time
-                  ? (alert.time as Timestamp).toDate().toLocaleString()
-                  : alert.time}
-              </td>
-              <td style={{ border: `1px solid #e0e0e0`, padding: 12 }}>
-                {typeof alert.location === "string"
-                  ? alert.location
-                  : alert.location?.address}
-              </td>
-              <td
+                Time
+              </th>
+              <th
                 style={{
-                  border: `1px solid #e0e0e0`,
+                  border: "1px solid #e0e0e0",
                   padding: 12,
+                  fontWeight: 600,
                 }}
               >
-                {alert.message}
-              </td>
+                Location
+              </th>
+              <th
+                style={{
+                  border: "1px solid #e0e0e0",
+                  padding: 12,
+                  fontWeight: 600,
+                }}
+              >
+                Message
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {alerts.map((alert) => (
+              <tr key={alert.id} style={{ background: "#f9fafb" }}>
+                <td style={{ border: "1px solid #e0e0e0", padding: 12 }}>
+                  {alert.userName}
+                </td>
+                <td style={{ border: "1px solid #e0e0e0", padding: 12 }}>
+                  {alert.serviceType}
+                </td>
+                <td style={{ border: "1px solid #e0e0e0", padding: 12 }}>
+                  {typeof alert.time === "object" &&
+                  alert.time &&
+                  "toDate" in alert.time
+                    ? (alert.time as Timestamp).toDate().toLocaleString()
+                    : alert.time}
+                </td>
+                <td style={{ border: "1px solid #e0e0e0", padding: 12 }}>
+                  {typeof alert.location === "string"
+                    ? alert.location
+                    : alert.location?.address}
+                </td>
+                <td style={{ border: "1px solid #e0e0e0", padding: 12 }}>
+                  {alert.message}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* Mobile Card/List Layout */}
+      <div className="alert-history-mobile-list">
+        {alerts.map((alert) => (
+          <div
+            key={alert.id}
+            className="alert-history-mobile-card"
+            style={{
+              background: "#fff",
+              borderRadius: 10,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+              padding: "1rem",
+              marginBottom: 16,
+              fontSize: 15,
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
+            <div style={{ fontWeight: 600, color: "#121a68" }}>
+              {alert.userName}{" "}
+              <span
+                style={{ color: "#ff5330", fontWeight: 500 }}
+              >{`(${alert.serviceType})`}</span>
+            </div>
+            <div style={{ color: "#6b7280", fontSize: 14 }}>
+              <strong>Time:</strong>{" "}
+              {typeof alert.time === "object" &&
+              alert.time &&
+              "toDate" in alert.time
+                ? (alert.time as Timestamp).toDate().toLocaleString()
+                : alert.time}
+            </div>
+            <div style={{ color: "#6b7280", fontSize: 14 }}>
+              <strong>Location:</strong>{" "}
+              {typeof alert.location === "string"
+                ? alert.location
+                : alert.location?.address}
+            </div>
+            {alert.message && (
+              <div style={{ color: "#222", fontSize: 15 }}>
+                <strong>Message:</strong> {alert.message}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

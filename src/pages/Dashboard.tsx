@@ -99,9 +99,22 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <h2 style={{ color: "#121a68", marginBottom: 24 }}>Incoming Alerts</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: "1rem" }}>
+      <h2
+        style={{
+          color: "#121a68",
+          marginBottom: 24,
+          fontSize: "1.3em",
+          marginTop: 56, // For spacing below menu bar
+        }}
+      >
+        Incoming Alerts
+      </h2>
+      {/* Desktop Card Grid */}
+      <div
+        className="dashboard-alerts-desktop"
+        style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}
+      >
         {filteredAlerts.length === 0 ? (
           <div
             style={{
@@ -130,6 +143,8 @@ const Dashboard: React.FC = () => {
                 width: "100%",
                 boxSizing: "border-box",
                 minWidth: 0,
+                // ////////////////////////
+                // marginRight: "0.8rem",
               }}
               onClick={() => navigate(`/alert/${item.id}`)}
             >
@@ -175,6 +190,60 @@ const Dashboard: React.FC = () => {
                 </span>
               </div>
               <div style={{ color: "#888", fontSize: 13 }}>
+                {typeof item.time === "object" && "toDate" in item.time
+                  ? item.time.toDate().toLocaleString()
+                  : item.time}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      {/* Mobile Card/List Layout */}
+      <div className="dashboard-alerts-mobile">
+        {filteredAlerts.length === 0 ? (
+          <div
+            style={{
+              width: "100%",
+              textAlign: "center",
+              color: "#888",
+              fontSize: 16,
+              padding: "36px 0",
+            }}
+          >
+            🎉 All clear! No alerts have been received for your service yet.
+          </div>
+        ) : (
+          filteredAlerts.map((item) => (
+            <div
+              key={item.id}
+              className="dashboard-alert-mobile-card"
+              style={{
+                background: "#fff",
+                borderRadius: 10,
+                boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+                padding: "1rem",
+                marginBottom: 16,
+                fontSize: 15,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+              onClick={() => navigate(`/alert/${item.id}`)}
+            >
+              <div style={{ fontWeight: 600, color: "#121a68" }}>
+                {item.userName}{" "}
+                <span style={{ color: "#ff5330", fontWeight: 500 }}>
+                  ({item.serviceType})
+                </span>
+              </div>
+              <div style={{ color: "#6b7280", fontSize: 14 }}>
+                <strong>Location:</strong>{" "}
+                {typeof item.location === "string"
+                  ? item.location
+                  : item.location?.address}
+              </div>
+              <div style={{ color: "#888", fontSize: 13 }}>
+                <strong>Time:</strong>{" "}
                 {typeof item.time === "object" && "toDate" in item.time
                   ? item.time.toDate().toLocaleString()
                   : item.time}

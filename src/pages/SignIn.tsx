@@ -4,10 +4,12 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../services/firebase";
 import { Link, useNavigate } from "react-router-dom";
 import Popup from "../components/Popup";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
   const navigate = useNavigate();
 
@@ -62,7 +64,7 @@ const SignIn: React.FC = () => {
       >
         <h2
           style={{
-            color: "#ff5330",
+            color: "#121a68",
             marginBottom: 24,
             textAlign: "center",
           }}
@@ -102,21 +104,57 @@ const SignIn: React.FC = () => {
         >
           Password
         </label>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
+        <div
           style={{
-            width: "100%",
-            padding: 10,
+            position: "relative",
             marginBottom: 16,
-            borderRadius: 8,
-            border: "1px solid #e0e0e0",
-            fontSize: 16,
+            display: "flex",
+            alignItems: "center",
           }}
-        />
+        >
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{
+              width: "100%",
+              padding: "12px 44px 12px 12px", // more space for icon
+              borderRadius: 8,
+              border: "1px solid #d1d5db",
+              fontSize: 16,
+              background: "#f3f4f6", // nice greyish background
+              color: "#222",
+              boxSizing: "border-box",
+              outline: "none",
+              transition: "border 0.2s",
+            }}
+          />
+          <span
+            onClick={() => setShowPassword((v) => !v)}
+            style={{
+              position: "absolute",
+              right: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              color: "#6b7280", // greyish icon
+              fontSize: 22,
+              background: "#f3f4f6",
+              borderRadius: "50%",
+              padding: 2,
+              transition: "color 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            tabIndex={0}
+          >
+            {showPassword ? <FiEyeOff /> : <FiEye />}
+          </span>
+        </div>
         <button
           type="submit"
           style={{

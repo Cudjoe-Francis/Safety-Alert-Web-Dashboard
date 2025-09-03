@@ -236,14 +236,14 @@ const App: React.FC = () => {
                   {serviceType && (
                     <div
                       style={{
-                        fontSize: "1em",
+                        fontSize: "0.85em",
                         color: "#ff5330",
                         fontWeight: 600,
                         marginBottom: 18,
                         letterSpacing: "0.5px",
                       }}
                     >
-                      Signed in as {serviceType}
+                     🎉 Signed in as {serviceType}
                     </div>
                   )}
                   <ul style={{ listStyle: "none", padding: 0, flex: 1 }}>
