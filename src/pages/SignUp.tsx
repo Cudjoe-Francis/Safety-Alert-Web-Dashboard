@@ -39,8 +39,7 @@ const SignUp: React.FC = () => {
         setPopupMsg("Please enter a valid email address.");
       } else if (err.code === "auth/weak-password") {
         setPopupMsg("Password should be at least 6 characters.");
-      } 
-      else {
+      } else {
         setPopupMsg("Sign up failed. Please try again.");
       }
     }
@@ -62,9 +61,10 @@ const SignUp: React.FC = () => {
           maxWidth: 400,
           width: "100%",
           background: "#fff",
-          padding: 32,
-          borderRadius: 16,
-          boxShadow: "0 2px 16px rgba(0,0,0,0.08)",
+          padding: 16,
+          borderRadius: 12,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+          boxSizing: "border-box",
         }}
       >
         <h2

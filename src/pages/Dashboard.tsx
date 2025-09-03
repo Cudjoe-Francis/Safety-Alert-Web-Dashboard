@@ -122,16 +122,14 @@ const Dashboard: React.FC = () => {
               key={item.id}
               className="alert-card"
               style={{
-                background: "linear-gradient(135deg, #fff 80%, #f8ead6ff 100%)",
-                borderRadius: 16,
-                boxShadow: "0 4px 18px rgba(0,0,0,0.08)",
-                padding: 28,
-                minWidth: 280,
-                flex: "1 1 320px",
-                cursor: "pointer",
-                transition: "box-shadow 0.2s, transform 0.2s",
-                marginBottom: 16,
-                border: "1px solid #ff5330",
+                background: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+                padding: "1rem",
+                marginBottom: "1rem",
+                width: "100%",
+                boxSizing: "border-box",
+                minWidth: 0,
               }}
               onClick={() => navigate(`/alert/${item.id}`)}
             >

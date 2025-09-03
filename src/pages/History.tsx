@@ -55,10 +55,10 @@ const History: React.FC = () => {
       <table
         style={{
           width: "100%",
-          background: "#fff",
-          borderCollapse: "collapse",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-          borderRadius: 12,
+          overflowX: "auto",
+          display: "block",
+          borderRadius: 8,
+          boxSizing: "border-box",
         }}
       >
         <thead>

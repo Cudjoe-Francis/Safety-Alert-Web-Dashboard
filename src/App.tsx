@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,36 +7,91 @@ import {
   useLocation,
   NavLink,
 } from "react-router-dom";
+import { FiMenu } from "react-icons/fi"; // npm install react-icons
+import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db, auth } from "./services/firebase";
+import { auth, db } from "./services/firebase";
 import Dashboard from "./pages/Dashboard";
 import AlertDetails from "./pages/AlertDetails";
 import History from "./pages/History";
 import IncidentReports from "./pages/IncidentReports";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
+import ForgotPassword from "./pages/ForgotPassword";
+import { theme } from "./theme";
+import logo from "../src/assets/Safety_Alert_App_Logo.jpg"; // Use your actual logo file name
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const user = auth.currentUser;
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span style={{ fontSize: 22, color: "#121a68" }}>Loading...</span>
+      </div>
+    );
+  }
+
   if (!user) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
+
   return <>{children}</>;
 };
 
 const App: React.FC = () => {
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [serviceType, setServiceType] = useState<string | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Close sidebar when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).classList.contains("menu-icon")
+      ) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   useEffect(() => {
-    const fetchServiceType = async () => {
-      const user = auth.currentUser;
+    const storedType = localStorage.getItem("serviceType");
+    setServiceType(storedType);
+  }, [menuOpen]);
+
+  // Always update serviceType when user signs in/up
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          setServiceType(userDoc.data().serviceType);
-          localStorage.setItem("serviceType", userDoc.data().serviceType);
+          const type = userDoc.data().serviceType;
+          setServiceType(type);
+          localStorage.setItem("serviceType", type);
         } else {
           setServiceType(null);
           localStorage.removeItem("serviceType");
@@ -45,30 +100,23 @@ const App: React.FC = () => {
         setServiceType(null);
         localStorage.removeItem("serviceType");
       }
-    };
-
-    // Listen for auth state changes
-    const unsubscribe = auth.onAuthStateChanged(() => {
-      fetchServiceType();
     });
-
-    // Initial fetch
-    fetchServiceType();
-
     return () => unsubscribe();
   }, []);
 
   const handleLogout = () => {
-    setShowLogoutModal(true);
+    setShowLogoutConfirm(true);
   };
 
   const confirmLogout = () => {
+    setShowLogoutConfirm(false);
+    localStorage.removeItem("serviceType");
     auth.signOut();
     window.location.href = "/signin";
   };
 
   const cancelLogout = () => {
-    setShowLogoutModal(false);
+    setShowLogoutConfirm(false);
   };
 
   return (
@@ -76,6 +124,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
           path="/*"
           element={
@@ -86,107 +135,127 @@ const App: React.FC = () => {
                   minHeight: "100vh",
                   width: "100vw",
                   background: "#f7f8fa",
+                  position: "relative",
                 }}
               >
+                {/* Hamburger menu icon (centered on top for mobile) */}
+                <button
+                  className={`menu-icon${menuOpen ? " hide" : ""}`}
+                  style={{
+                    position: "fixed",
+                    top: 18,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    zIndex: 2001,
+                    background: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.09)",
+                    padding: 8,
+                    display: "none",
+                  }}
+                  onClick={() => setMenuOpen((open) => !open)}
+                  aria-label="Open navigation"
+                >
+                  <FiMenu size={28} color="#ff5330" />
+                </button>
+                {/* Overlay for mobile sidebar */}
+                {menuOpen && (
+                  <div
+                    className="sidebar-overlay"
+                    style={{
+                      position: "fixed",
+                      top: 0,
+                      left: 0,
+                      width: "100vw",
+                      height: "100vh",
+                      background: "rgba(0,0,0,0.18)",
+                      zIndex: 1999,
+                    }}
+                    onClick={() => setMenuOpen(false)}
+                  />
+                )}
                 {/* Sidebar */}
                 <nav
+                  ref={sidebarRef}
+                  className={`sidebar${menuOpen ? " open" : ""}`}
                   style={{
-                    width: 240,
-                    overflowX: "hidden",
+                    width: 220,
                     minWidth: 180,
-                    color: "#fff",
-                    borderRight: "none",
-                    padding: "2.5rem 1.5rem",
-                    boxShadow: "2px 0 16px rgba(0,0,0,0.08)",
+                    background: "#fff",
+                    borderRight: `1px solid #e0e0e0`,
+                    padding: "2rem 1rem",
+                    boxShadow: `2px 0 8px ${theme.shadow}`,
                     height: "100vh",
                     position: "sticky",
                     top: 0,
+                    boxSizing: "border-box",
+                    transition: "left 0.3s",
+                    zIndex: 2000,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "flex-start",
-                    zIndex: 1000,
                   }}
-                  className="sidebar"
                 >
                   <div
                     style={{
                       display: "flex",
-                      alignItems: "center",
-                      marginBottom: 24,
+                      alignItems: "flex-start", // Align items to the top
+                      gap: 14,
+                      marginBottom: 32,
                     }}
                   >
                     <img
-                      src="/vite.svg"
-                      alt="Logo"
+                      src={logo}
+                      alt="Safety Alert Logo"
                       style={{
-                        width: 38,
-                        height: 38,
-                        marginRight: 12,
-                        borderRadius: 8,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.09)",
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
+                        objectFit: "cover",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        marginTop: 2, // Slight top margin for better alignment
+                        marginBottom: 0,
+                        display: "block",
                       }}
                     />
-                    <span
-                      style={{
-                        fontSize: 22,
-                        // fontWeight: 700,
-                        // letterSpacing: 1,
-                        // color: "#000",
-                        // fontFamily: "Segoe UI, Arial, sans-serif",
-                      }}
+                    <h1
                       className="sidebar-title"
+                      style={{
+                        color: theme.primary,
+                        fontSize: 24,
+                        margin: 0,
+                        fontWeight: 700,
+                        letterSpacing: "1px",
+                        lineHeight: "48px", // Vertically center with logo
+                        display: "block",
+                      }}
                     >
                       Safety Alert
-                    </span>
+                    </h1>
                   </div>
                   {serviceType && (
                     <div
                       style={{
-                        background: "rgba(255,255,255,0.12)",
-                        color: "#000",
+                        fontSize: "1em",
+                        color: "#ff5330",
                         fontWeight: 600,
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                        marginBottom: 28,
-                        fontSize: 15,
-                        boxShadow: "0 2px 8px rgba(255,83,48,0.07)",
-                        textAlign: "center",
-                        letterSpacing: 0.5,
-                        width: "100%",
+                        marginBottom: 18,
+                        letterSpacing: "0.5px",
                       }}
                     >
-                      <span style={{ opacity: 0.8 }}>Signed in as</span>{" "}
-                      <span
-                        style={{ textTransform: "capitalize", fontWeight: 700 }}
-                      >
-                        {serviceType}
-                      </span>
+                      Signed in as {serviceType}
                     </div>
                   )}
-                  <ul style={{ listStyle: "none", padding: 0, width: "100%" }}>
+                  <ul style={{ listStyle: "none", padding: 0, flex: 1 }}>
                     <li>
                       <NavLink
                         to="/"
-                        end
                         className={({ isActive }) =>
-                          isActive ? "sidebar-link active" : "sidebar-link"
+                          "sidebar-link" + (isActive ? " active" : "")
                         }
-                        style={{
-                          // color: "#fff",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                          padding: "12px 0",
-                          display: "flex",
-                          alignItems: "center",
-                          borderRadius: 8,
-                          marginBottom: 8,
-                          fontSize: 17,
-                          transition: "background 0.18s, color 0.18s",
-                        }}
+                        style={{ textDecoration: "none" }}
+                        onClick={() => setMenuOpen(false)}
                       >
-                        <span style={{ marginRight: 10, fontSize: 18 }}>
-                          🏠
-                        </span>
                         Dashboard
                       </NavLink>
                     </li>
@@ -194,69 +263,29 @@ const App: React.FC = () => {
                       <NavLink
                         to="/history"
                         className={({ isActive }) =>
-                          isActive ? "sidebar-link active" : "sidebar-link"
+                          "sidebar-link" + (isActive ? " active" : "")
                         }
-                        style={{
-                          // color: "#fff",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                          padding: "12px 0",
-                          display: "flex",
-                          alignItems: "center",
-                          borderRadius: 8,
-                          marginBottom: 8,
-                          fontSize: 17,
-                          transition: "background 0.18s, color 0.18s",
-                        }}
+                        style={{ textDecoration: "none" }}
+                        onClick={() => setMenuOpen(false)}
                       >
-                        <span style={{ marginRight: 10, fontSize: 18 }}>
-                          📜
-                        </span>
                         History
                       </NavLink>
                     </li>
-
-                    {/* Uncomment if you want Incident Reports */}
-                    {/* <li>
-                      <NavLink
-                        to="/incident-reports"
-                        className={({ isActive }) =>
-                          isActive ? "sidebar-link active" : "sidebar-link"
-                        }
-                        style={{
-                          color: "#fff",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                          padding: "12px 0",
-                          display: "flex",
-                          alignItems: "center",
-                          borderRadius: 8,
-                          marginBottom: 8,
-                          fontSize: 17,
-                          transition: "background 0.18s, color 0.18s",
-                        }}
-                      >
-                        <span style={{ marginRight: 10, fontSize: 18 }}>🚨</span>
-                        Incident Reports
-                      </NavLink>
-                    </li> */}
                   </ul>
                   <button
                     onClick={handleLogout}
                     style={{
                       marginTop: "auto",
-                      background: "#ff5330",
+                      background: "#e53935",
                       color: "#fff",
                       border: "none",
-                      borderRadius: 8,
-                      padding: "10px 24px",
+                      borderRadius: 6,
+                      padding: "10px 16px",
                       cursor: "pointer",
-                      fontWeight: 700,
-                      fontSize: 16,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
-                      alignSelf: "center",
-                      marginBottom: 12,
-                      transition: "background 0.18s",
+                      width: "100%",
+                      fontWeight: 600,
+                      fontSize: "1em",
+                      boxShadow: "0 2px 8px rgba(229,57,53,0.09)",
                     }}
                   >
                     Logout
@@ -274,8 +303,8 @@ const App: React.FC = () => {
                     />
                   </Routes>
                 </main>
-                {/* Logout Confirmation Modal */}
-                {showLogoutModal && (
+                {/* Logout Confirmation Popup */}
+                {showLogoutConfirm && (
                   <div
                     style={{
                       position: "fixed",
@@ -283,60 +312,69 @@ const App: React.FC = () => {
                       left: 0,
                       width: "100vw",
                       height: "100vh",
-                      background: "rgba(0,0,0,0.3)",
+                      background: "rgba(0,0,0,0.18)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      zIndex: 2000,
+                      zIndex: 9999,
                     }}
                   >
                     <div
                       style={{
                         background: "#fff",
-                        padding: "32px 24px",
-                        borderRadius: 12,
-                        boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+                        padding: 32,
+                        borderRadius: 14,
+                        boxShadow: "0 2px 16px rgba(0,0,0,0.15)",
+                        minWidth: 300,
                         textAlign: "center",
-                        minWidth: 320,
                       }}
                     >
-                      <h3 style={{ marginBottom: 18, color: "#121a68" }}>
-                        Confirm Logout
-                      </h3>
-                      <p style={{ marginBottom: 24 }}>
-                        Are you sure you want to logout?
-                      </p>
-                      <button
-                        onClick={confirmLogout}
+                      <div
                         style={{
-                          background: "#ff5330",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: 6,
-                          padding: "8px 24px",
-                          fontWeight: 600,
-                          fontSize: 16,
-                          marginRight: 12,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Logout
-                      </button>
-                      <button
-                        onClick={cancelLogout}
-                        style={{
-                          background: "#e0e0e0",
+                          marginBottom: 24,
                           color: "#121a68",
-                          border: "none",
-                          borderRadius: 6,
-                          padding: "8px 24px",
                           fontWeight: 600,
-                          fontSize: 16,
-                          cursor: "pointer",
+                          fontSize: "1.1em",
                         }}
                       >
-                        Stay Signed In
-                      </button>
+                        Are you sure you want to logout?
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 16,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <button
+                          onClick={confirmLogout}
+                          style={{
+                            background: "#ff5330",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: 8,
+                            padding: "10px 24px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Yes, Logout
+                        </button>
+                        <button
+                          onClick={cancelLogout}
+                          style={{
+                            background: "#e0e0e0",
+                            color: "#121a68",
+                            border: "none",
+                            borderRadius: 8,
+                            padding: "10px 24px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

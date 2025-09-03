@@ -2,16 +2,12 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color: #213547;
+  background-color: #ffffff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
   overflow-x: hidden;
 }
 
@@ -28,10 +24,11 @@ body {
   margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
   background: #f8faf7;
+  color: #222;
 }
 
 h1 {
-  font-size: 3.2em;
+  font-size: 1.2em;
   line-height: 1.1;
 }
 
@@ -96,46 +93,176 @@ button:focus-visible {
   main {
     padding: 1rem !important;
   }
+  /* Responsive main content and sidebar */
+  .sidebar {
+    width: 100vw !important;
+    min-width: 0 !important;
+    height: auto !important;
+    position: static !important;
+    box-shadow: none !important;
+    padding: 0.5rem 0.5rem !important;
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+  .sidebar-title {
+    font-size: 1.2em !important;
+    margin-bottom: 0 !important;
+  }
+  .sidebar ul {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100vw !important;
+    background: none !important;
+    box-shadow: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .sidebar li {
+    border-bottom: none !important;
+    border-radius: 0 !important;
+    margin-right: 8px !important;
+    margin-bottom: 0 !important;
+  }
+  .sidebar-link {
+    padding: 10px 8px !important;
+    font-size: 1em !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+  }
+  main {
+    padding: 1rem !important;
+    width: 100vw !important;
+  }
+  .alert-card,
+  .history-table,
+  .details-card {
+    min-width: 100vw !important;
+    padding: 12px !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+  }
+  table {
+    font-size: 14px !important;
+  }
 }
+
+/* Extra small screens */
+@media (max-width: 600px) {
+  .alert-card,
+  .details-card,
+  .history-table {
+    padding: 8px !important;
+    font-size: 13px !important;
+  }
+  .sidebar-link {
+    font-size: 0.95em !important;
+    padding: 8px 4px !important;
+  }
+  main {
+    padding: 0.5rem !important;
+  }
+  table {
+    font-size: 12px !important;
+  }
+}
+
+/* Responsive forms */
+form {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+input,
+select,
+textarea,
+button {
+  font-size: 1em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive tables */
+table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+  border-radius: 8px;
+}
+th,
+td {
+  padding: 10px 6px;
+  text-align: left;
+  word-break: break-word;
+}
+
+/* Responsive modals and popups */
+@media (max-width: 600px) {
+  .popup-modal {
+    min-width: 90vw !important;
+    padding: 16px !important;
+  }
+}
+
+/* Responsive buttons */
+button {
+  min-width: 80px;
+  font-size: 1em;
+  padding: 0.6em 1em;
+}
+
+/* Responsive headings */
+h2,
+h3 {
+  font-size: 1.3em;
+  margin-bottom: 0.7em;
+}
+
 /* //////////////////////////////////////////////////////////////////////////////////////////////////////// */
+/* ===========================
+   SIDEBAR/NAVBAR: LEFT SIDE (DESKTOP)
+   =========================== */
+
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(135deg, #fff 80%, #f9e2de 100%) !important;
-  color: #fff !important;
+  background: #fff !important;
+  color: #222 !important;
   overflow-y: auto;
   z-index: 1000;
   box-shadow: 2px 0 16px rgba(0, 0, 0, 0.08);
+  overflow-x: hidden;
 }
 
 .sidebar ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  background-color: #fff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #ddd;
-  margin-top: 0;
-  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  border-right: none;
+  border-radius: 0;
 }
 
 .sidebar li {
-  border-bottom: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.sidebar li:hover
-/* .sidebar li:active  */ {
-  background-color: #f7a696; /* Changed hover color */
-  color: #fff !important;
+  border-bottom: none;
+  border-radius: 0;
+  margin-bottom: 8px;
 }
 
 .sidebar-link {
+  display: block;
+  padding: 12px 18px;
+  font-size: 1.08em;
+  color: #121a68 !important;
+  background: none;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
   transition: background 0.18s, color 0.18s;
-  padding: 1rem !important;
-  color: #000 !important;
+  text-decoration: none;
 }
 
 .sidebar-link.active,
@@ -148,7 +275,9 @@ button:focus-visible {
   font-family: "Segoe UI", Arial, sans-serif;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #000 !important;
+  color: #121a68 !important;
+  margin-bottom: 32px;
+  font-size: 1.2em !important; /* <-- Always 1.3em */
 }
 
 .sidebar li:last-child {
@@ -161,19 +290,130 @@ button:focus-visible {
   border-color: #121a68;
 }
 
-@media (max-width: 700px) {
+/* ===========================
+   SIDEBAR/NAVBAR: TOGGLED OPEN (MOBILE)
+   =========================== */
+
+@media (max-width: 900px) {
   .sidebar {
-    width: 100vw !important;
-    min-width: 0 !important;
-    height: auto !important;
-    flex-direction: row !important;
-    position: static !important;
-    box-shadow: none !important;
-    padding: 0 !important;
+    position: fixed !important;
+    left: -100vw;
+    top: 0;
+    height: 100vh !important;
+    width: 80vw !important;
+    max-width: 320px !important;
+    z-index: 2000;
+    background: #fff !important;
+    transition: left 0.3s;
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.08);
+    padding: 2rem 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important; /* Ensure left alignment */
+  }
+  .sidebar.open {
+    left: 0 !important;
+  }
+  .sidebar ul {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin-bottom: 0 !important;
+    width: 100%;
   }
   .sidebar-link {
+    padding: 12px 18px !important;
+    font-size: 1.08em !important;
+    border-radius: 8px !important;
+    margin-bottom: 8px !important;
+    text-align: left !important;
+  }
+  .sidebar-title {
+    font-size: 1.3em !important; /* <-- Always 1.3em */
     margin-bottom: 0 !important;
+  }
+}
+
+/* ===========================
+   MENU ICON FOR MOBILE
+   =========================== */
+
+.menu-icon {
+  display: none;
+}
+
+.menu-icon.hide {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .menu-icon {
+    display: block !important;
+    position: fixed !important;
+    top: 18px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2001 !important;
+    background: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09) !important;
+    padding: 8px !important;
+  }
+  .sidebar {
+    position: fixed !important;
+    left: -100vw;
+    top: 0;
+    height: 100vh !important;
+    width: 80vw !important;
+    max-width: 320px !important;
+    z-index: 2000;
+    background: #fff !important;
+    transition: left 0.3s;
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.08);
+    padding: 2rem 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .sidebar.open {
+    left: 0 !important;
+  }
+  main {
+    padding: 1rem !important;
+    width: 100vw !important;
+  }
+  .sidebar-title {
+    font-size: 1.2em !important;
+    margin-bottom: 0 !important;
+  }
+  .sidebar ul {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin-bottom: 0 !important;
+  }
+  .sidebar-link {
     padding: 10px 8px !important;
     font-size: 1em !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+  }
+  .sidebar button {
+    margin-top: auto !important;
+    width: 100% !important;
+  }
+}
+
+/* ===========================
+   SIDEBAR OVERLAY FOR MOBILE
+   =========================== */
+
+.sidebar-overlay {
+  display: block;
+}
+
+@media (min-width: 901px) {
+  .sidebar-overlay {
+    display: none !important;
   }
 }

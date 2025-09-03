@@ -26,11 +26,13 @@ const ReplyForm: React.FC<ReplyFormProps> = ({ onSend }) => {
     <form
       onSubmit={handleSubmit}
       style={{
-        marginTop: 24,
-        background: theme.card,
+        maxWidth: 400,
+        width: "100%",
+        background: "#fff",
         padding: 16,
-        borderRadius: 8,
-        boxShadow: `0 2px 8px ${theme.shadow}`,
+        borderRadius: 12,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+        boxSizing: "border-box",
       }}
     >
       <h3>Send a Reply</h3>

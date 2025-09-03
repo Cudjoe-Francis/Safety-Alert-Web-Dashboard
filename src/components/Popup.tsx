@@ -20,12 +20,12 @@ const Popup: React.FC<{ message: string; onClose: () => void }> = ({
   >
     <div
       style={{
-        background: "#fff",
-        padding: 32,
+        minWidth: "90vw",
+        padding: 16,
         borderRadius: 12,
-        boxShadow: "0 2px 16px rgba(0,0,0,0.15)",
-        minWidth: 300,
-        textAlign: "center",
+        boxSizing: "border-box",
+        background: "#fff",
+        // ...other styles...
       }}
     >
       <div style={{ marginBottom: 24, color: "#e53935", fontWeight: 600 }}>

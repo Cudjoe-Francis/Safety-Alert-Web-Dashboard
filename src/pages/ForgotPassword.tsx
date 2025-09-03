@@ -1,39 +1,28 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../services/firebase";
-import { Link, useNavigate } from "react-router-dom";
-import Popup from "../components/Popup";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../services/firebase";
+import { Link } from "react-router-dom";
 
-const SignIn: React.FC = () => {
+const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [popupMsg, setPopupMsg] = useState("");
-  const navigate = useNavigate();
+  const [sent, setSent] = useState(false);
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
+      await sendPasswordResetEmail(auth, email);
+      setSent(true);
+      setPopupMsg(
+        "A password reset email has been sent. Please check your inbox."
       );
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-      if (userDoc.exists()) {
-        localStorage.setItem("serviceType", userDoc.data().serviceType);
-      }
-      navigate("/");
     } catch (err: any) {
-      // console.log(err); // <-- Add this line
       if (err.code === "auth/user-not-found") {
         setPopupMsg("No account found with this email.");
-      } else if (err.code === "auth/wrong-password") {
-        setPopupMsg("Incorrect password. Please try again.");
       } else if (err.code === "auth/invalid-email") {
         setPopupMsg("Please enter a valid email address.");
       } else {
-        setPopupMsg("Sign in failed. Please try again.");
+        setPopupMsg("Failed to send reset email. Please try again.");
       }
     }
   };
@@ -49,7 +38,7 @@ const SignIn: React.FC = () => {
       }}
     >
       <form
-        onSubmit={handleSignIn}
+        onSubmit={handleReset}
         style={{
           maxWidth: 400,
           width: "100%",
@@ -67,7 +56,7 @@ const SignIn: React.FC = () => {
             textAlign: "center",
           }}
         >
-          Sign In
+          Forgot Password
         </h2>
         <label
           style={{
@@ -76,37 +65,13 @@ const SignIn: React.FC = () => {
             display: "block",
           }}
         >
-          Email
+          Enter your email address
         </label>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 16,
-            borderRadius: 8,
-            border: "1px solid #e0e0e0",
-            fontSize: 16,
-          }}
-        />
-        <label
-          style={{
-            fontWeight: 500,
-            marginBottom: 8,
-            display: "block",
-          }}
-        >
-          Password
-        </label>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
           required
           style={{
             width: "100%",
@@ -130,27 +95,36 @@ const SignIn: React.FC = () => {
             fontSize: 16,
             cursor: "pointer",
           }}
+          disabled={sent}
         >
-          Sign In
+          Send Reset Email
         </button>
         <div style={{ marginTop: 16, textAlign: "center" }}>
-          Don't have an account?{" "}
-          <Link to="/signup" style={{ color: "#ff5330", fontWeight: 500 }}>
-            Sign Up
+          <Link to="/signin" style={{ color: "#ff5330", fontWeight: 500 }}>
+            Back to Sign In
           </Link>
         </div>
-        <div style={{ marginTop: 8, textAlign: "center" }}>
-          <Link
-            to="/forgot-password"
-            style={{ color: "#ff5330", fontWeight: 500 }}
+        {popupMsg && (
+          <div
+            style={{
+              marginTop: 18,
+              color: sent ? "#121a68" : "#e53935",
+              fontWeight: 500,
+              textAlign: "center",
+            }}
           >
-            Forgot Password?
-          </Link>
-        </div>
+            {popupMsg}
+          </div>
+        )}
+        {sent && (
+          <div style={{ marginTop: 8, color: "#ff5330", fontSize: "0.95em" }}>
+            If you don't see the email, please check your spam folder and mark
+            it as "Not Spam".
+          </div>
+        )}
       </form>
-      {popupMsg && <Popup message={popupMsg} onClose={() => setPopupMsg("")} />}
     </div>
   );
 };
 
-export default SignIn;
+export default ForgotPassword;

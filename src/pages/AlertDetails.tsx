@@ -139,13 +139,17 @@ const AlertDetails: React.FC = () => {
         background: "#fff",
         borderRadius: 12,
         boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-        padding: 32,
+        padding: "1rem",
+        width: "100%",
+        boxSizing: "border-box",
+        minWidth: 0,
       }}
     >
       <button
         onClick={() => navigate("/")}
         style={{
           marginBottom: 16,
+          marginTop: 48, // Add this line
           background: "#ff5330",
           color: "#fff",
           border: "none",
