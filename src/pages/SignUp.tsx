@@ -6,6 +6,7 @@ import { db } from "../services/firebase";
 import { Link, useNavigate } from "react-router-dom";
 import Popup from "../components/Popup";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import bgImage from "../assets/Safety_Alert_Dashboard_Background.jpg";
 
 const serviceTypes = ["Police", "Hospital", "Fire", "Campus"];
 
@@ -48,171 +49,190 @@ const SignUp: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f7f8fa",
-      }}
-    >
-      <form
-        onSubmit={handleSignUp}
+    <div style={{ position: "relative", minHeight: "100vh", width: "100vw" }}>
+      {/* Blurred background image */}
+      <div
         style={{
-          maxWidth: 400,
-          width: "100%",
-          background: "#fff",
-          padding: 16,
-          borderRadius: 12,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-          boxSizing: "border-box",
+          position: "fixed",
+          inset: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: 0,
+          background: `url(${bgImage}) center center / cover no-repeat`,
+          filter: "blur(8px) brightness(0.5)",
+          opacity: 0.9,
+        }}
+      />
+      {/* Form container on top */}
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        <h2
+        <form
+          onSubmit={handleSignUp}
           style={{
-            color: "#121a68",
-            marginBottom: 24,
-            textAlign: "center",
-          }}
-        >
-          Sign Up
-        </h2>
-        <label
-          style={{
-            fontWeight: 500,
-            marginBottom: 8,
-            display: "block",
-          }}
-        >
-          Service Type
-        </label>
-        <select
-          value={serviceType}
-          onChange={(e) => setServiceType(e.target.value)}
-          style={{
+            maxWidth: 400,
             width: "100%",
-            padding: 10,
-            marginBottom: 16,
-            borderRadius: 8,
-            border: "1px solid #e0e0e0",
-            fontSize: 16,
+            background: "#fff",
+            padding: 16,
+            borderRadius: 12,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+            boxSizing: "border-box",
           }}
         >
-          {serviceTypes.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-        <label
-          style={{
-            fontWeight: 500,
-            marginBottom: 8,
-            display: "block",
-          }}
-        >
-          Email
-        </label>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 16,
-            borderRadius: 8,
-            border: "1px solid #e0e0e0",
-            fontSize: 16,
-          }}
-        />
-        <label
-          style={{
-            fontWeight: 500,
-            marginBottom: 8,
-            display: "block",
-          }}
-        >
-          Password
-        </label>
-        <div
-          style={{
-            position: "relative",
-            marginBottom: 16,
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
+          <h2
+            style={{
+              color: "#121a68",
+              marginBottom: 24,
+              textAlign: "center",
+            }}
+          >
+            Sign Up
+          </h2>
+          <label
+            style={{
+              fontWeight: 500,
+              marginBottom: 8,
+              display: "block",
+            }}
+          >
+            Service Type
+          </label>
+          <select
+            value={serviceType}
+            onChange={(e) => setServiceType(e.target.value)}
+            style={{
+              width: "100%",
+              padding: 10,
+              marginBottom: 16,
+              borderRadius: 8,
+              border: "1px solid #e0e0e0",
+              fontSize: 16,
+            }}
+          >
+            {serviceTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          <label
+            style={{
+              fontWeight: 500,
+              marginBottom: 8,
+              display: "block",
+            }}
+          >
+            Email
+          </label>
           <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
             style={{
               width: "100%",
-              padding: "12px 44px 12px 12px", // more space for icon
+              padding: 10,
+              marginBottom: 16,
               borderRadius: 8,
-              border: "1px solid #d1d5db",
+              border: "1px solid #e0e0e0",
               fontSize: 16,
-              background: "#f3f4f6", // nice greyish background
-              color: "#222",
-              boxSizing: "border-box",
-              outline: "none",
-              transition: "border 0.2s",
             }}
           />
-          <span
-            onClick={() => setShowPassword((v) => !v)}
+          <label
             style={{
-              position: "absolute",
-              right: 14,
-              top: "50%",
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              color: "#6b7280", // greyish icon
-              fontSize: 22,
-              background: "#f3f4f6",
-              borderRadius: "50%",
-              padding: 2,
-              transition: "color 0.2s",
+              fontWeight: 500,
+              marginBottom: 8,
+              display: "block",
+            }}
+          >
+            Password
+          </label>
+          <div
+            style={{
+              position: "relative",
+              marginBottom: 16,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
             }}
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            tabIndex={0}
           >
-            {showPassword ? <FiEyeOff /> : <FiEye />}
-          </span>
-        </div>
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            background: "#ff5330",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "12px 0",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-        >
-          Sign Up
-        </button>
-        <div style={{ marginTop: 16, textAlign: "center" }}>
-          Already have an account?{" "}
-          <Link to="/signin" style={{ color: "#ff5330", fontWeight: 500 }}>
-            Sign In
-          </Link>
-        </div>
-      </form>
-      {popupMsg && <Popup message={popupMsg} onClose={() => setPopupMsg("")} />}
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                padding: "12px 44px 12px 12px", // more space for icon
+                borderRadius: 8,
+                border: "1px solid #d1d5db",
+                fontSize: 16,
+                background: "#f3f4f6", // nice greyish background
+                color: "#222",
+                boxSizing: "border-box",
+                outline: "none",
+                transition: "border 0.2s",
+              }}
+            />
+            <span
+              onClick={() => setShowPassword((v) => !v)}
+              style={{
+                position: "absolute",
+                right: 14,
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                color: "#6b7280", // greyish icon
+                fontSize: 22,
+                background: "#f3f4f6",
+                borderRadius: "50%",
+                padding: 2,
+                transition: "color 0.2s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              tabIndex={0}
+            >
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </span>
+          </div>
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              background: "#ff5330",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "12px 0",
+              fontWeight: 600,
+              fontSize: 16,
+              cursor: "pointer",
+            }}
+          >
+            Sign Up
+          </button>
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            Already have an account?{" "}
+            <Link to="/signin" style={{ color: "#ff5330", fontWeight: 500 }}>
+              Sign In
+            </Link>
+          </div>
+        </form>
+        {popupMsg && (
+          <Popup message={popupMsg} onClose={() => setPopupMsg("")} />
+        )}
+      </div>
     </div>
   );
 };

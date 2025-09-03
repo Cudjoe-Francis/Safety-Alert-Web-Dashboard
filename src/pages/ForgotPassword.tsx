@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { Link } from "react-router-dom";
+import bgImage from "../assets/Safety_Alert_Dashboard_Background.jpg";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -28,101 +29,116 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#f7f8fa",
-      }}
-    >
-      <form
-        onSubmit={handleReset}
+    <div style={{ position: "relative", minHeight: "100vh", width: "100vw" }}>
+      <div
         style={{
-          maxWidth: 400,
-          width: "100%",
-          background: "#fff",
-          padding: 16,
-          borderRadius: 12,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-          boxSizing: "border-box",
+          position: "fixed",
+          inset: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: 0,
+          background: `url(${bgImage}) center center / cover no-repeat`,
+          filter: "blur(8px) brightness(0.5)",
+          opacity: 0.9,
+        }}
+      />
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        <h2
+        <form
+          onSubmit={handleReset}
           style={{
-            color: "#121a68",
-            marginBottom: 24,
-            textAlign: "center",
-          }}
-        >
-          Forgot Password
-        </h2>
-        <label
-          style={{
-            fontWeight: 500,
-            marginBottom: 8,
-            display: "block",
-          }}
-        >
-          Enter your email address
-        </label>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{
+            maxWidth: 400,
             width: "100%",
-            padding: 10,
-            marginBottom: 16,
-            borderRadius: 8,
-            border: "1px solid #e0e0e0",
-            fontSize: 16,
+            background: "#fff",
+            padding: 16,
+            borderRadius: 12,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+            boxSizing: "border-box",
           }}
-        />
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            background: "#ff5330",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "12px 0",
-            fontWeight: 600,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-          disabled={sent}
         >
-          Send Reset Email
-        </button>
-        <div style={{ marginTop: 16, textAlign: "center" }}>
-          <Link to="/signin" style={{ color: "#ff5330", fontWeight: 500 }}>
-            Back to Sign In
-          </Link>
-        </div>
-        {popupMsg && (
-          <div
+          <h2
             style={{
-              marginTop: 18,
-              color: sent ? "#121a68" : "#e53935",
-              fontWeight: 500,
+              color: "#121a68",
+              marginBottom: 24,
               textAlign: "center",
             }}
           >
-            {popupMsg}
+            Forgot Password
+          </h2>
+          <label
+            style={{
+              fontWeight: 500,
+              marginBottom: 8,
+              display: "block",
+            }}
+          >
+            Enter your email address
+          </label>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              width: "100%",
+              padding: 10,
+              marginBottom: 16,
+              borderRadius: 8,
+              border: "1px solid #e0e0e0",
+              fontSize: 16,
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              background: "#ff5330",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "12px 0",
+              fontWeight: 600,
+              fontSize: 16,
+              cursor: "pointer",
+            }}
+            disabled={sent}
+          >
+            Send Reset Email
+          </button>
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <Link to="/signin" style={{ color: "#ff5330", fontWeight: 500 }}>
+              Back to Sign In
+            </Link>
           </div>
-        )}
-        {sent && (
-          <div style={{ marginTop: 8, color: "#ff5330", fontSize: "0.95em" }}>
-            If you don't see the email, please check your spam folder and mark
-            it as "Not Spam".
-          </div>
-        )}
-      </form>
+          {popupMsg && (
+            <div
+              style={{
+                marginTop: 18,
+                color: sent ? "#121a68" : "#e53935",
+                fontWeight: 500,
+                textAlign: "center",
+              }}
+            >
+              {popupMsg}
+            </div>
+          )}
+          {sent && (
+            <div style={{ marginTop: 8, color: "#ff5330", fontSize: "0.95em" }}>
+              If you don't see the email, please check your spam folder and mark
+              it as "Not Spam".
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 };

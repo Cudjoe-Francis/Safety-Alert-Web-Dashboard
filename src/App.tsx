@@ -243,7 +243,7 @@ const App: React.FC = () => {
                         letterSpacing: "0.5px",
                       }}
                     >
-                     🎉 Signed in as {serviceType}
+                      🎉 Signed in as {serviceType}
                     </div>
                   )}
                   <ul style={{ listStyle: "none", padding: 0, flex: 1 }}>
@@ -318,6 +318,7 @@ const App: React.FC = () => {
                       justifyContent: "center",
                       zIndex: 9999,
                     }}
+                    onClick={cancelLogout} // <-- Hide popup when clicking overlay
                   >
                     <div
                       style={{
@@ -328,6 +329,7 @@ const App: React.FC = () => {
                         minWidth: 300,
                         textAlign: "center",
                       }}
+                      onClick={(e) => e.stopPropagation()} // <-- Prevent overlay click when clicking inside popup
                     >
                       <div
                         style={{
@@ -349,7 +351,7 @@ const App: React.FC = () => {
                         <button
                           onClick={confirmLogout}
                           style={{
-                            background: "#ff5330",
+                            background: "red",
                             color: "#fff",
                             border: "none",
                             borderRadius: 8,
