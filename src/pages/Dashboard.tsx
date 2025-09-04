@@ -53,6 +53,8 @@ interface Alert {
 const Dashboard: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [serviceType, setServiceType] = useState<string | null>(null);
+  const [openedAlerts, setOpenedAlerts] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,30 +92,126 @@ const Dashboard: React.FC = () => {
     return () => unsub();
   }, [serviceType]);
 
+  useEffect(() => {
+    // Load opened alerts from localStorage
+    const opened = localStorage.getItem("openedAlerts");
+    setOpenedAlerts(opened ? JSON.parse(opened) : []);
+  }, []);
+
+  const handleOpenAlert = (id: string) => {
+    if (!openedAlerts.includes(id)) {
+      const updated = [...openedAlerts, id];
+      setOpenedAlerts(updated);
+      localStorage.setItem("openedAlerts", JSON.stringify(updated));
+    }
+    navigate(`/alert/${id}`);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulate a short delay for UX (remove if you want instant)
+    setTimeout(() => {
+      // This will re-trigger the Firestore listener by updating state
+      // If you want to force a re-fetch, you can re-run the query manually:
+      const q = query(
+        collection(db, "alerts"),
+        where("serviceType", "==", serviceType)
+      );
+      onSnapshot(q, (snapshot) => {
+        setAlerts(
+          snapshot.docs.map((doc) => ({
+            ...(doc.data() as Alert),
+            id: doc.id,
+          }))
+        );
+        setRefreshing(false);
+      });
+    }, 800); // 800ms for activity indicator
+  };
+
   const responderServiceType = serviceType;
   const filteredAlerts = alerts.filter(
     (alert) => alert.serviceType === responderServiceType
   );
 
+  const sortedAlerts = [...filteredAlerts].sort((a, b) => {
+    const timeA =
+      typeof a.time === "object" && "toDate" in a.time
+        ? a.time.toDate().getTime()
+        : new Date(a.time).getTime();
+    const timeB =
+      typeof b.time === "object" && "toDate" in b.time
+        ? b.time.toDate().getTime()
+        : new Date(b.time).getTime();
+    return timeB - timeA; // Most recent first
+  });
+
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "1rem" }}>
-      <h2
+      <div
         style={{
-          color: "#121a68",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           marginBottom: 24,
-          fontSize: "1.3em",
           marginTop: 56,
         }}
       >
-        Incoming Alerts
-      </h2>
+        <h2
+          style={{
+            color: "#121a68",
+            fontSize: "1.3em",
+            margin: 0,
+          }}
+        >
+          Incoming Alerts
+        </h2>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          style={{
+            background: "#f3f4f6",
+            color: "#ff5330",
+            border: "none",
+            borderRadius: 8,
+            padding: "8px 18px",
+            fontWeight: 600,
+            fontSize: "1em",
+            cursor: refreshing ? "not-allowed" : "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            marginLeft: 16,
+            width: "fit-content",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            opacity: refreshing ? 0.7 : 1,
+          }}
+          title="Refresh dashboard"
+        >
+          {refreshing ? (
+            <span
+              style={{
+                display: "inline-block",
+                width: 18,
+                height: 18,
+                border: "2px solid #ff5330",
+                borderTop: "2px solid #f3f4f6",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+          ) : (
+            "Refresh"
+          )}
+        </button>
+      </div>
 
       {/* Desktop Card Grid */}
       <div
         className="dashboard-alerts-desktop"
         style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}
       >
-        {filteredAlerts.length === 0 ? (
+        {sortedAlerts.length === 0 ? (
           <div
             style={{
               width: "100%",
@@ -128,11 +226,12 @@ const Dashboard: React.FC = () => {
             Stay ready—alerts will appear here as soon as they arrive.
           </div>
         ) : (
-          filteredAlerts.map((item) => (
+          sortedAlerts.map((item) => (
             <div
               key={item.id}
               className="alert-card"
               style={{
+                position: "relative",
                 background: "#fff",
                 borderRadius: 12,
                 boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
@@ -141,9 +240,29 @@ const Dashboard: React.FC = () => {
                 width: "100%",
                 boxSizing: "border-box",
                 minWidth: 0,
+                cursor: "pointer",
               }}
-              onClick={() => navigate(`/alert/${item.id}`)}
+              onClick={() => handleOpenAlert(item.id)}
             >
+              {/* Badge for unopened alert */}
+              {!openedAlerts.includes(item.id) && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 12,
+                    right: 18,
+                    background: "#ff5330",
+                    color: "#fff",
+                    borderRadius: "50%",
+                    padding: "6px 10px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    boxShadow: "0 2px 8px rgba(255,83,48,0.13)",
+                  }}
+                >
+                  NEW
+                </span>
+              )}
               <div
                 style={{
                   fontWeight: 700,
@@ -197,7 +316,7 @@ const Dashboard: React.FC = () => {
 
       {/* Mobile Card/List Layout */}
       <div className="dashboard-alerts-mobile">
-        {filteredAlerts.length === 0 ? (
+        {sortedAlerts.length === 0 ? (
           <div
             style={{
               width: "100%",
@@ -210,7 +329,7 @@ const Dashboard: React.FC = () => {
             🎉 All clear! No alerts have been received for your service yet.
           </div>
         ) : (
-          filteredAlerts.map((item) => (
+          sortedAlerts.map((item) => (
             <div
               key={item.id}
               className="dashboard-alert-mobile-card"
@@ -225,7 +344,7 @@ const Dashboard: React.FC = () => {
                 flexDirection: "column",
                 gap: 6,
               }}
-              onClick={() => navigate(`/alert/${item.id}`)}
+              onClick={() => handleOpenAlert(item.id)}
             >
               <div style={{ fontWeight: 600, color: "#121a68" }}>
                 {item.userName}{" "}

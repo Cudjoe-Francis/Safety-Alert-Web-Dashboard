@@ -289,7 +289,7 @@ const AlertDetails: React.FC = () => {
                 alertId: id,
               });
               alert(
-                `Reply sent and saved to ${alertData?.user?.firstName ?? ""} ${
+                `Reply sent to ${alertData?.user?.firstName ?? ""} ${
                   alertData?.user?.lastName ?? ""
                 }!`
               );
