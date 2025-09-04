@@ -30,10 +30,9 @@ const SignUp: React.FC = () => {
         serviceType,
         email,
       });
-      localStorage.setItem("serviceType", serviceType); // Store service type in localStorage
-      navigate("/"); // Use navigate instead of window.location.href
+      localStorage.setItem("serviceType", serviceType);
+      navigate("/");
     } catch (err: any) {
-      // Firebase error codes: https://firebase.google.com/docs/reference/js/auth.md#autherrorcodes
       if (err.code === "auth/email-already-in-use") {
         setPopupMsg(
           "This email is already registered. Please sign in or use another email."
@@ -63,6 +62,7 @@ const SignUp: React.FC = () => {
           opacity: 0.9,
         }}
       />
+
       {/* Form container on top */}
       <div
         style={{
@@ -171,11 +171,11 @@ const SignUp: React.FC = () => {
               required
               style={{
                 width: "100%",
-                padding: "12px 44px 12px 12px", // more space for icon
+                padding: "12px 44px 12px 12px",
                 borderRadius: 8,
                 border: "1px solid #d1d5db",
                 fontSize: 16,
-                background: "#f3f4f6", // nice greyish background
+                background: "#f3f4f6",
                 color: "#222",
                 boxSizing: "border-box",
                 outline: "none",
@@ -190,7 +190,7 @@ const SignUp: React.FC = () => {
                 top: "50%",
                 transform: "translateY(-50%)",
                 cursor: "pointer",
-                color: "#6b7280", // greyish icon
+                color: "#6b7280",
                 fontSize: 22,
                 background: "#f3f4f6",
                 borderRadius: "50%",

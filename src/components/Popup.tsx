@@ -17,7 +17,8 @@ const Popup: React.FC<{ message: string; onClose: () => void }> = ({
       justifyContent: "center",
       zIndex: 9999,
     }}
-    onClick={onClose} // Close popup when clicking overlay
+    // Close popup when clicking overlay
+    onClick={onClose}
   >
     <div
       style={{
@@ -32,7 +33,8 @@ const Popup: React.FC<{ message: string; onClose: () => void }> = ({
         position: "relative",
         transition: "box-shadow 0.2s",
       }}
-      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside popup
+      // Prevent closing when clicking inside popup
+      onClick={(e) => e.stopPropagation()}
     >
       <div
         style={{

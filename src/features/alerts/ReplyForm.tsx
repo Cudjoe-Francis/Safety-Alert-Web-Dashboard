@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { theme } from "../../theme";
 
 interface ReplyFormProps {
   onSend: (reply: {
@@ -46,7 +45,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({ onSend }) => {
             width: "100%",
             padding: 8,
             marginBottom: 8,
-            border: `1px solid ${theme.border}`,
+            border: "1px solid rgba(0,0,0,0.07)",
             borderRadius: 4,
           }}
           required
@@ -60,7 +59,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({ onSend }) => {
             width: "100%",
             padding: 8,
             marginBottom: 8,
-            border: `1px solid ${theme.border}`,
+             border: "1px solid  #e0e0e0",
             borderRadius: 4,
           }}
           required
@@ -72,7 +71,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({ onSend }) => {
           style={{
             width: "100%",
             padding: 8,
-            border: `1px solid ${theme.border}`,
+            border: "1px solid  #e0e0e0",
             borderRadius: 4,
             minHeight: 60,
           }}
@@ -82,8 +81,8 @@ const ReplyForm: React.FC<ReplyFormProps> = ({ onSend }) => {
       <button
         type="submit"
         style={{
-          background: theme.primary,
-          color: theme.textLight,
+          background: "#ff5330",
+          color: "#fff",
           border: "none",
           borderRadius: 4,
           padding: "8px 16px",

@@ -13,7 +13,6 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "../services/firebase";
-import AudioPlayer from "../features/alerts/AudioPlayer";
 import ReplyForm from "../features/alerts/ReplyForm";
 import LocationMap from "../features/alerts/LocationMap";
 import { auth } from "../services/firebase"; // Import auth
@@ -73,7 +72,7 @@ const AlertDetails: React.FC = () => {
   const [alertData, setAlertData] = useState<Alert | null>(null);
   const [loading, setLoading] = useState(true);
   const [replies, setReplies] = useState<Reply[]>([]);
-  const [serviceType, setServiceType] = useState<string | null>(null); // <-- Added state for serviceType
+  const [serviceType, setServiceType] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -277,7 +276,6 @@ const AlertDetails: React.FC = () => {
             label={alertData.location.address ?? ""}
           />
         )}
-      {alertData.audioUrl && <AudioPlayer audioUrl={alertData.audioUrl} />}
       {serviceType === alertData.serviceType && (
         <ReplyForm
           onSend={async (reply) => {

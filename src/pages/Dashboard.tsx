@@ -3,14 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { db } from "../services/firebase";
 import {
   collection,
-  // doc,
-  // getDoc,
   onSnapshot,
   query,
   where,
   Timestamp,
 } from "firebase/firestore";
-// import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 
 interface Location {
   address?: string;
@@ -43,7 +40,7 @@ interface Alert {
   id: string;
   userName: string;
   serviceType: string;
-  time: string | Timestamp; // allow both string and Timestamp
+  time: string | Timestamp;
   location: string | Location;
   message?: string;
   audioUrl?: string;
@@ -76,7 +73,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log("serviceType:", serviceType); // Add this line
+    console.log("serviceType:", serviceType);
     if (!serviceType) return;
     const q = query(
       collection(db, "alerts"),
@@ -105,11 +102,12 @@ const Dashboard: React.FC = () => {
           color: "#121a68",
           marginBottom: 24,
           fontSize: "1.3em",
-          marginTop: 56, // For spacing below menu bar
+          marginTop: 56,
         }}
       >
         Incoming Alerts
       </h2>
+
       {/* Desktop Card Grid */}
       <div
         className="dashboard-alerts-desktop"
@@ -143,8 +141,6 @@ const Dashboard: React.FC = () => {
                 width: "100%",
                 boxSizing: "border-box",
                 minWidth: 0,
-                // ////////////////////////
-                // marginRight: "0.8rem",
               }}
               onClick={() => navigate(`/alert/${item.id}`)}
             >
@@ -198,6 +194,7 @@ const Dashboard: React.FC = () => {
           ))
         )}
       </div>
+
       {/* Mobile Card/List Layout */}
       <div className="dashboard-alerts-mobile">
         {filteredAlerts.length === 0 ? (

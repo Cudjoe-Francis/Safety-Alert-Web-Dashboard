@@ -14,11 +14,9 @@ import { auth, db } from "./services/firebase";
 import Dashboard from "./pages/Dashboard";
 import AlertDetails from "./pages/AlertDetails";
 import History from "./pages/History";
-import IncidentReports from "./pages/IncidentReports";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
-import { theme } from "./theme";
 import logo from "../src/assets/Safety_Alert_App_Logo.jpg"; // Use your actual logo file name
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -185,7 +183,7 @@ const App: React.FC = () => {
                     background: "#fff",
                     borderRight: `1px solid #e0e0e0`,
                     padding: "2rem 1rem",
-                    boxShadow: `2px 0 8px ${theme.shadow}`,
+                    boxShadow: "2px 0 8px rgba(0,0,0,0.07)",
                     height: "100vh",
                     position: "sticky",
                     top: 0,
@@ -199,7 +197,7 @@ const App: React.FC = () => {
                   <div
                     style={{
                       display: "flex",
-                      alignItems: "flex-start", // Align items to the top
+                      alignItems: "flex-start",
                       gap: 14,
                       marginBottom: 32,
                     }}
@@ -221,12 +219,12 @@ const App: React.FC = () => {
                     <h1
                       className="sidebar-title"
                       style={{
-                        color: theme.primary,
+                        color: "#ff5330",
                         fontSize: 24,
                         margin: 0,
                         fontWeight: 700,
                         letterSpacing: "1px",
-                        lineHeight: "48px", // Vertically center with logo
+                        lineHeight: "48px",
                         display: "block",
                       }}
                     >
@@ -297,10 +295,6 @@ const App: React.FC = () => {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/alert/:id" element={<AlertDetails />} />
                     <Route path="/history" element={<History />} />
-                    <Route
-                      path="/incident-reports"
-                      element={<IncidentReports />}
-                    />
                   </Routes>
                 </main>
                 {/* Logout Confirmation Popup */}
@@ -329,7 +323,7 @@ const App: React.FC = () => {
                         minWidth: 300,
                         textAlign: "center",
                       }}
-                      onClick={(e) => e.stopPropagation()} // <-- Prevent overlay click when clicking inside popup
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <div
                         style={{
