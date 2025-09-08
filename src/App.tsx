@@ -11,6 +11,7 @@ import { FiMenu } from "react-icons/fi"; // npm install react-icons
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./services/firebase";
+import { initializeAlertSystem } from "./services/newAlertTracker";
 import Dashboard from "./pages/Dashboard";
 import AlertDetails from "./pages/AlertDetails";
 import History from "./pages/History";
@@ -81,7 +82,7 @@ const App: React.FC = () => {
     setServiceType(storedType);
   }, [menuOpen]);
 
-  // Always update serviceType when user signs in/up
+  // Always update serviceType when user signs in/up and initialize alert system
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -90,6 +91,9 @@ const App: React.FC = () => {
           const type = userDoc.data().serviceType;
           setServiceType(type);
           localStorage.setItem("serviceType", type);
+          
+          // Initialize alert system when user is authenticated
+          initializeAlertSystem();
         } else {
           setServiceType(null);
           localStorage.removeItem("serviceType");

@@ -8,8 +8,6 @@ import {
   where,
   Timestamp,
 } from "firebase/firestore";
-import { simulateEmailNotification, type AlertEmailData } from "../services/emailService";
-import { notifyServiceEmail } from "../services/replyNotificationService";
 
 interface Location {
   address?: string;
@@ -90,49 +88,12 @@ const Dashboard: React.FC = () => {
         id: doc.id,
       }));
       
-      // Check for new alerts and send email notifications
+      // Only track new alerts, don't send emails automatically
       snapshot.docChanges().forEach((change) => {
         if (change.type === "added" && !processedAlerts.includes(change.doc.id)) {
-          const alertData = change.doc.data() as Alert;
-          const emailData: AlertEmailData = {
-            userName: alertData.userName,
-            serviceType: alertData.serviceType,
-            location: typeof alertData.location === 'string' 
-              ? alertData.location 
-              : alertData.location?.address || `${alertData.location?.lat}, ${alertData.location?.lng}`,
-            time: typeof alertData.time === 'object' && 'toDate' in alertData.time
-              ? alertData.time.toDate().toLocaleString()
-              : alertData.time.toString(),
-            message: alertData.message,
-            userDetails: alertData.user ? {
-              firstName: alertData.user.firstName,
-              lastName: alertData.user.lastName,
-              phoneNumber: alertData.user.phoneNumber,
-              bloodType: alertData.user.bloodType,
-              medicalCondition: alertData.user.medicalCondition,
-              allergies: alertData.user.allergies,
-            } : undefined,
-            emergencyContacts: alertData.emergencyContacts
-          };
-          
-          // Send email notification to service-specific email
-          notifyServiceEmail({
-            serviceType: alertData.serviceType,
-            userName: alertData.userName,
-            location: typeof alertData.location === 'string' 
-              ? alertData.location 
-              : alertData.location?.address || `${alertData.location?.lat}, ${alertData.location?.lng}`,
-            time: typeof alertData.time === 'object' && 'toDate' in alertData.time
-              ? alertData.time.toDate().toLocaleString()
-              : alertData.time.toString(),
-            message: alertData.message,
-          });
-          
-          // Also keep the console simulation for debugging
-          simulateEmailNotification(emailData);
-          
-          // Mark this alert as processed
+          // Mark this alert as processed to prevent re-processing
           setProcessedAlerts(prev => [...prev, change.doc.id]);
+          console.log(`📋 New alert detected: ${change.doc.id}`);
         }
       });
       
@@ -312,6 +273,46 @@ const Dashboard: React.FC = () => {
                   NEW
                 </span>
               )}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <span style={{ fontSize: 13, color: "#888" }}>
+                  {typeof item.time === 'object' && 'toDate' in item.time
+                    ? item.time.toDate().toLocaleString()
+                    : item.time.toString()}
+                </span>
+                <span
+                  style={{
+                    background:
+                      item.serviceType === "police"
+                        ? "#dbeafe"
+                        : item.serviceType === "hospital"
+                        ? "#fecaca"
+                        : item.serviceType === "fire"
+                        ? "#fed7aa"
+                        : "#d1fae5",
+                    color:
+                      item.serviceType === "police"
+                        ? "#1e40af"
+                        : item.serviceType === "hospital"
+                        ? "#dc2626"
+                        : item.serviceType === "fire"
+                        ? "#ea580c"
+                        : "#059669",
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  {item.serviceType.toUpperCase()}
+                </span>
+              </div>
               <div
                 style={{
                   fontWeight: 700,

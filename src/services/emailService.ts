@@ -43,8 +43,10 @@ function getServiceEmail(serviceType: string): string {
   return SERVICE_EMAILS[normalizedType as keyof typeof SERVICE_EMAILS] || 'safety.alert.app@gmail.com';
 }
 
-export async function sendAlertEmail(alertData: AlertEmailData): Promise<boolean> {
+export async function sendAlertEmail(alertData: AlertEmailData, alertId?: string): Promise<boolean> {
   try {
+    // Generate unique alert ID if not provided
+    const uniqueAlertId = alertId || `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const response = await fetch('http://localhost:3001/api/send-alert-email', {
       method: 'POST',
@@ -55,11 +57,12 @@ export async function sendAlertEmail(alertData: AlertEmailData): Promise<boolean
         to: getServiceEmail(alertData.serviceType),
         subject: `🚨 URGENT: Emergency Alert - ${alertData.serviceType.toUpperCase()}`,
         html: generateEmailHTML(alertData),
+        alertId: uniqueAlertId, // Include alert ID for duplicate prevention
       }),
     });
 
     if (response.ok) {
-      console.log(`✅ Emergency alert email sent to ${alertData.serviceType}`);
+      console.log(`✅ Emergency alert email sent to ${alertData.serviceType} (ID: ${uniqueAlertId})`);
       
       // Show success notification
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -70,6 +73,19 @@ export async function sendAlertEmail(alertData: AlertEmailData): Promise<boolean
       }
       
       return true;
+    } else if (response.status === 429) {
+      // Handle rate limiting
+      const errorData = await response.json();
+      console.warn(`⚠️ Email rate limited: ${errorData.error} (${errorData.cooldownRemaining}s remaining)`);
+      
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Email Rate Limited', {
+          body: `Please wait ${errorData.cooldownRemaining} seconds before sending another email`,
+          icon: '/favicon.ico'
+        });
+      }
+      
+      return false;
     } else {
       console.error('Failed to send emergency alert email');
       return false;

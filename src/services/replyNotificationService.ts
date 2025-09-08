@@ -155,6 +155,9 @@ export async function notifyServiceEmail(alertData: {
   message?: string;
 }): Promise<boolean> {
   try {
+    // Generate unique alert ID for duplicate prevention
+    const alertId = `alert-${Date.now()}-${alertData.userName}-${alertData.serviceType}`;
+    
     const response = await fetch('http://localhost:3001/api/send-alert-email', {
       method: 'POST',
       headers: {
@@ -164,12 +167,18 @@ export async function notifyServiceEmail(alertData: {
         to: getServiceEmail(alertData.serviceType),
         subject: `🚨 URGENT: New Emergency Alert - ${alertData.serviceType.toUpperCase()}`,
         html: generateServiceNotificationHTML(alertData),
+        alertId: alertId, // Include unique ID for duplicate prevention
       }),
     });
 
     if (response.ok) {
-      console.log(`✅ Service notification email sent to ${alertData.serviceType}`);
+      console.log(`✅ Service notification email sent to ${alertData.serviceType} (ID: ${alertId})`);
       return true;
+    } else if (response.status === 429) {
+      // Handle rate limiting
+      const errorData = await response.json();
+      console.warn(`⚠️ Email rate limited for ${alertData.serviceType}: ${errorData.error}`);
+      return false;
     } else {
       console.error('❌ Failed to send service notification email');
       return false;

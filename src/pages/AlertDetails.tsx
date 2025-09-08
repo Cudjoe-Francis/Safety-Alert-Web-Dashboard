@@ -17,6 +17,7 @@ import ReplyForm from "../features/alerts/ReplyForm";
 import LocationMap from "../features/alerts/LocationMap";
 import { auth } from "../services/firebase"; // Import auth
 import { sendReplyNotification } from "../services/replyNotificationService";
+import { sendReplyEmailToUser } from "../services/replyEmailService";
 
 interface EmergencyContact {
   name?: string;
@@ -302,17 +303,38 @@ const AlertDetails: React.FC = () => {
                 userId: alertData.userId || alertData.user?.email || '', // Use userId or fallback to user email
               });
 
-              if (notificationSent) {
+              // Send email notification to the Android user
+              const emailSent = await sendReplyEmailToUser({
+                alertId: id,
+                responderName: reply.responderName,
+                station: reply.station,
+                message: reply.message,
+                serviceType: alertData.serviceType,
+              });
+
+              if (notificationSent && emailSent) {
                 alert(
                   `Reply sent to ${alertData?.user?.firstName ?? ""} ${
                     alertData?.user?.lastName ?? ""
-                  }! Push notification delivered.`
+                  }! Push notification and email delivered.`
+                );
+              } else if (notificationSent) {
+                alert(
+                  `Reply sent to ${alertData?.user?.firstName ?? ""} ${
+                    alertData?.user?.lastName ?? ""
+                  }! Push notification delivered (email may have failed).`
+                );
+              } else if (emailSent) {
+                alert(
+                  `Reply sent to ${alertData?.user?.firstName ?? ""} ${
+                    alertData?.user?.lastName ?? ""
+                  }! Email delivered (push notification may have failed).`
                 );
               } else {
                 alert(
                   `Reply sent to ${alertData?.user?.firstName ?? ""} ${
                     alertData?.user?.lastName ?? ""
-                  }! (Push notification may have failed, but reply is saved)`
+                  }! (Both push notification and email may have failed, but reply is saved)`
                 );
               }
             } catch (error) {
