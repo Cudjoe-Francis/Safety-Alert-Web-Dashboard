@@ -8,6 +8,7 @@ import {
   where,
   Timestamp,
 } from "firebase/firestore";
+import { simulateEmailNotification, type AlertEmailData } from "../services/emailService";
 
 interface Location {
   address?: string;
@@ -55,6 +56,7 @@ const Dashboard: React.FC = () => {
   const [serviceType, setServiceType] = useState<string | null>(null);
   const [openedAlerts, setOpenedAlerts] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [processedAlerts, setProcessedAlerts] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,15 +84,48 @@ const Dashboard: React.FC = () => {
       where("serviceType", "==", serviceType)
     );
     const unsub = onSnapshot(q, (snapshot) => {
-      setAlerts(
-        snapshot.docs.map((doc) => ({
-          ...(doc.data() as Alert),
-          id: doc.id,
-        }))
-      );
+      const newAlerts = snapshot.docs.map((doc) => ({
+        ...(doc.data() as Alert),
+        id: doc.id,
+      }));
+      
+      // Check for new alerts and send email notifications
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added" && !processedAlerts.includes(change.doc.id)) {
+          const alertData = change.doc.data() as Alert;
+          const emailData: AlertEmailData = {
+            userName: alertData.userName,
+            serviceType: alertData.serviceType,
+            location: typeof alertData.location === 'string' 
+              ? alertData.location 
+              : alertData.location?.address || `${alertData.location?.lat}, ${alertData.location?.lng}`,
+            time: typeof alertData.time === 'object' && 'toDate' in alertData.time
+              ? alertData.time.toDate().toLocaleString()
+              : alertData.time.toString(),
+            message: alertData.message,
+            userDetails: alertData.user ? {
+              firstName: alertData.user.firstName,
+              lastName: alertData.user.lastName,
+              phoneNumber: alertData.user.phoneNumber,
+              bloodType: alertData.user.bloodType,
+              medicalCondition: alertData.user.medicalCondition,
+              allergies: alertData.user.allergies,
+            } : undefined,
+            emergencyContacts: alertData.emergencyContacts
+          };
+          
+          // Send email notification
+          simulateEmailNotification(emailData);
+          
+          // Mark this alert as processed
+          setProcessedAlerts(prev => [...prev, change.doc.id]);
+        }
+      });
+      
+      setAlerts(newAlerts);
     });
     return () => unsub();
-  }, [serviceType]);
+  }, [serviceType, processedAlerts]);
 
   useEffect(() => {
     // Load opened alerts from localStorage
