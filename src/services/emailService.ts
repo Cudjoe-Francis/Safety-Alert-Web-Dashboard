@@ -29,24 +29,30 @@ const EMAIL_CONFIG = {
   }
 };
 
-// Service-specific email addresses - using Gmail for testing
+// Service-specific email addresses - these should be the actual service provider emails
 const SERVICE_EMAILS = {
-  police: 'safety.alert.app@gmail.com',
-  hospital: 'safety.alert.app@gmail.com',
-  'fire department': 'safety.alert.app@gmail.com',
-  ambulance: 'safety.alert.app@gmail.com'
+  police: 'police@gmail.com',
+  hospital: 'hospital@gmail.com',
+  fire: 'fire@gmail.com',
+  campus: 'campus@gmail.com'
 };
+
+// Function to get the correct email based on service type
+function getServiceEmail(serviceType: string): string {
+  const normalizedType = serviceType.toLowerCase();
+  return SERVICE_EMAILS[normalizedType as keyof typeof SERVICE_EMAILS] || 'safety.alert.app@gmail.com';
+}
 
 export async function sendAlertEmail(alertData: AlertEmailData): Promise<boolean> {
   try {
-    // Send email to emergency service
+
     const response = await fetch('http://localhost:3001/api/send-alert-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        to: SERVICE_EMAILS[alertData.serviceType.toLowerCase() as keyof typeof SERVICE_EMAILS] || 'emergency@safetyalert.com',
+        to: getServiceEmail(alertData.serviceType),
         subject: `🚨 URGENT: Emergency Alert - ${alertData.serviceType.toUpperCase()}`,
         html: generateEmailHTML(alertData),
       }),
@@ -157,7 +163,7 @@ function generateEmailHTML(alertData: AlertEmailData): string {
 export function simulateEmailNotification(alertData: AlertEmailData): void {
   console.log('📧 EMAIL NOTIFICATION SENT');
   console.log('=========================');
-  console.log(`To: ${SERVICE_EMAILS[alertData.serviceType.toLowerCase() as keyof typeof SERVICE_EMAILS] || 'emergency@safetyalert.com'}`);
+  console.log(`To: ${getServiceEmail(alertData.serviceType)}`);
   console.log(`Subject: 🚨 URGENT: Emergency Alert - ${alertData.serviceType.toUpperCase()}`);
   console.log(`Alert for: ${alertData.userName}`);
   console.log(`Service: ${alertData.serviceType}`);

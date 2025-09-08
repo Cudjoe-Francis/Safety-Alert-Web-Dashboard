@@ -9,6 +9,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { simulateEmailNotification, type AlertEmailData } from "../services/emailService";
+import { notifyServiceEmail } from "../services/replyNotificationService";
 
 interface Location {
   address?: string;
@@ -114,7 +115,20 @@ const Dashboard: React.FC = () => {
             emergencyContacts: alertData.emergencyContacts
           };
           
-          // Send email notification
+          // Send email notification to service-specific email
+          notifyServiceEmail({
+            serviceType: alertData.serviceType,
+            userName: alertData.userName,
+            location: typeof alertData.location === 'string' 
+              ? alertData.location 
+              : alertData.location?.address || `${alertData.location?.lat}, ${alertData.location?.lng}`,
+            time: typeof alertData.time === 'object' && 'toDate' in alertData.time
+              ? alertData.time.toDate().toLocaleString()
+              : alertData.time.toString(),
+            message: alertData.message,
+          });
+          
+          // Also keep the console simulation for debugging
           simulateEmailNotification(emailData);
           
           // Mark this alert as processed

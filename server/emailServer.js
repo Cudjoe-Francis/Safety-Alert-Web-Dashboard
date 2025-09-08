@@ -18,13 +18,19 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Service-specific email addresses
+// Service-specific email addresses - these should match the actual service provider emails
 const SERVICE_EMAILS = {
-  police: 'police@safetyalert.com',
-  hospital: 'hospital@safetyalert.com',
-  'fire department': 'fire@safetyalert.com',
-  ambulance: 'ambulance@safetyalert.com'
+  police: 'police@gmail.com',
+  hospital: 'hospital@gmail.com',
+  fire: 'fire@gmail.com',
+  campus: 'campus@gmail.com'
 };
+
+// Function to get the correct email based on service type
+function getServiceEmail(serviceType) {
+  const normalizedType = serviceType.toLowerCase();
+  return SERVICE_EMAILS[normalizedType] || 'safety.alert.app@gmail.com';
+}
 
 // API endpoint to send alert emails
 app.post('/api/send-alert-email', async (req, res) => {

@@ -16,6 +16,7 @@ import { db } from "../services/firebase";
 import ReplyForm from "../features/alerts/ReplyForm";
 import LocationMap from "../features/alerts/LocationMap";
 import { auth } from "../services/firebase"; // Import auth
+import { sendReplyNotification } from "../services/replyNotificationService";
 
 interface EmergencyContact {
   name?: string;
@@ -56,6 +57,7 @@ interface Alert {
   lng?: number;
   user?: UserDetails;
   emergencyContacts?: EmergencyContact[];
+  userId?: string;
 }
 
 interface Reply {
@@ -281,6 +283,7 @@ const AlertDetails: React.FC = () => {
           onSend={async (reply) => {
             if (!id) return;
             try {
+              // Add reply to Firestore
               await addDoc(collection(db, "alerts", id, "replies"), {
                 responderName: reply.responderName,
                 station: reply.station,
@@ -288,11 +291,30 @@ const AlertDetails: React.FC = () => {
                 createdAt: serverTimestamp(),
                 alertId: id,
               });
-              alert(
-                `Reply sent to ${alertData?.user?.firstName ?? ""} ${
-                  alertData?.user?.lastName ?? ""
-                }!`
-              );
+
+              // Send push notification to mobile app user
+              const notificationSent = await sendReplyNotification({
+                alertId: id,
+                responderName: reply.responderName,
+                station: reply.station,
+                message: reply.message,
+                serviceType: alertData.serviceType,
+                userId: alertData.userId || alertData.user?.email || '', // Use userId or fallback to user email
+              });
+
+              if (notificationSent) {
+                alert(
+                  `Reply sent to ${alertData?.user?.firstName ?? ""} ${
+                    alertData?.user?.lastName ?? ""
+                  }! Push notification delivered.`
+                );
+              } else {
+                alert(
+                  `Reply sent to ${alertData?.user?.firstName ?? ""} ${
+                    alertData?.user?.lastName ?? ""
+                  }! (Push notification may have failed, but reply is saved)`
+                );
+              }
             } catch (error) {
               alert("Failed to send reply: " + (error as Error).message);
             }
