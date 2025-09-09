@@ -8,36 +8,63 @@ interface ReplyEmailData {
   station: string;
   message: string;
   serviceType: string;
+  alertCreatorEmail?: string;
+  alertCreatorName?: string;
 }
 
 // Function to send email notification to the original Android user when someone replies
 export async function sendReplyEmailToUser(replyData: ReplyEmailData): Promise<boolean> {
   try {
-    // Get the original alert to find the user's email
-    const alertDoc = await getDoc(doc(db, "alerts", replyData.alertId));
-    
-    if (!alertDoc.exists()) {
-      console.error("Alert document not found");
-      return false;
+    // Get mobile user for reply notifications - only return if user is actually a mobile user
+    async function getMobileUserForAlert(alertId: string): Promise<string | null> {
+      try {
+        const alertDoc = await getDoc(doc(db, "alerts", alertId));
+        
+        if (!alertDoc.exists()) {
+          console.error("Alert document not found");
+          return null;
+        }
+
+        const alertData = alertDoc.data();
+        const userEmail = alertData.userEmail || alertData.user?.email;
+        
+        if (!userEmail) {
+          console.error("No user email found in alert");
+          return null;
+        }
+
+        // Verify this is actually a mobile user
+        const { getUserTypeForNotifications } = await import('./userValidationService');
+        const userType = await getUserTypeForNotifications(userEmail);
+        
+        if (userType !== 'mobile') {
+          console.log(`⚠️ User ${userEmail} is not a mobile user (type: ${userType}), skipping reply email`);
+          return null;
+        }
+
+        return userEmail;
+      } catch (error) {
+        console.error('❌ Error getting mobile user for alert:', error);
+        return null;
+      }
     }
 
-    const alertData = alertDoc.data();
-    const userEmail = alertData.userEmail || alertData.user?.email;
-
-    console.log("🔍 REPLY EMAIL DEBUG - Alert data:", JSON.stringify(alertData, null, 2));
-    console.log("🔍 REPLY EMAIL DEBUG - Looking for user email in:", {
-      userEmail: alertData.userEmail,
-      userObjectEmail: alertData.user?.email,
-      finalEmail: userEmail
-    });
-
+    const userEmail = await getMobileUserForAlert(replyData.alertId);
     if (!userEmail) {
-      console.error("❌ REPLY EMAIL ERROR: No user email found in alert data. Available fields:", Object.keys(alertData));
-      console.error("❌ REPLY EMAIL ERROR: User object:", alertData.user);
+      console.log("⚠️ No mobile user found for reply notification");
       return false;
     }
 
-    console.log("✅ REPLY EMAIL: Found user email:", userEmail);
+    console.log("✅ REPLY EMAIL: Found mobile user email:", userEmail);
+
+    // Get alert data for email generation
+    const alertDoc = await getDoc(doc(db, "alerts", replyData.alertId));
+    if (!alertDoc.exists()) {
+      console.error("❌ REPLY EMAIL ERROR: Could not fetch alert data");
+      return false;
+    }
+    
+    const alertData = alertDoc.data();
 
     // Generate unique reply ID for duplicate prevention
     const replyId = `reply-${replyData.alertId}-${Date.now()}`;
@@ -48,19 +75,25 @@ export async function sendReplyEmailToUser(replyData: ReplyEmailData): Promise<b
       recipientEmail: userEmail,
       subject: `🚨 Emergency Response Received - ${replyData.serviceType.toUpperCase()}`,
       alertId: replyId,
+      html: generateReplyEmailHTML(replyData, alertData, userEmail)
     });
 
-    const response = await fetch('http://localhost:3001/api/send-alert-email', {
+    // Get dynamic email server URL
+    const { getEmailServerUrl } = await import('../../utils/getEmailServerUrl');
+    const emailServerUrl = await getEmailServerUrl();
+    
+    const response = await fetch(`${emailServerUrl}/api/send-reply-notification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        serviceType: 'reply',
-        recipientEmail: userEmail,
-        subject: `🚨 Emergency Response Received - ${replyData.serviceType.toUpperCase()}`,
-        html: generateReplyEmailHTML(replyData, alertData, userEmail),
-        alertId: replyId,
+        alertCreatorEmail: userEmail,
+        responderName: replyData.responderName,
+        station: replyData.station,
+        message: replyData.message,
+        serviceType: replyData.serviceType,
+        alertId: replyData.alertId,
       }),
     });
 

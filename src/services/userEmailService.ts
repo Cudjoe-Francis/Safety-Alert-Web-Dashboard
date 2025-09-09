@@ -23,7 +23,7 @@ export async function sendEmailToLoggedInUser(alertData: UserEmailData): Promise
     // Generate unique alert ID for duplicate prevention
     const uniqueAlertId = `user-alert-${alertData.alertId}-${Date.now()}`;
     
-    const response = await fetch('http://localhost:3001/api/send-alert-email', {
+    const response = await fetch('http://localhost:3002/api/send-alert-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../services/firebase";
 import { Link, useNavigate } from "react-router-dom";
 import Popup from "../components/Popup";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import bgImage from "../assets/Safety_Alert_Dashboard_Background.jpg";
+import { validateEmailRegistration } from "../services/userValidationService";
 
 const serviceTypes = ["Police", "Hospital", "Fire", "Campus"];
 
@@ -20,16 +21,35 @@ const SignUp: React.FC = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     try {
+      // Validate email registration before creating account
+      const validation = await validateEmailRegistration(
+        email,
+        serviceType,
+        'service_provider',
+        'web_dashboard'
+      );
+      
+      if (!validation.isValid) {
+        setPopupMsg(validation.message);
+        return;
+      }
+      
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
+      
       await setDoc(doc(db, "users", userCredential.user.uid), {
-        serviceType,
-        email,
+        serviceType: serviceType.toLowerCase(),
+        email: email.toLowerCase().trim(),
+        userType: 'service_provider',
+        platform: 'web_dashboard',
+        createdAt: serverTimestamp(),
       });
+      
       localStorage.setItem("serviceType", serviceType);
       navigate("/");
     } catch (err: any) {

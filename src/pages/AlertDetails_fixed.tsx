@@ -16,7 +16,7 @@ import { db } from "../services/firebase";
 import ReplyForm from "../features/alerts/ReplyForm";
 import LocationMap from "../features/alerts/LocationMap";
 import { sendReplyNotification } from "../services/replyNotificationService";
-import { sendReplyEmailToUser } from "../services/emailService";
+import { sendReplyEmailToUser } from "../services/replyEmailService";
 import { useToast } from "../hooks/useToast";
 
 interface EmergencyContact {
@@ -161,22 +161,32 @@ const AlertDetails: React.FC = () => {
           Alert not found
         </div>
       ) : (
-        <div>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              background: "#fff",
-              border: "1px solid #e1e5e9",
-              borderRadius: "6px",
-              padding: "8px 16px",
-              cursor: "pointer",
-              marginBottom: "24px",
-              fontSize: "14px",
-              color: "#495057",
-              fontWeight: "500",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-            }}
-          >
+        <div
+      style={{
+        maxWidth: 700,
+        margin: "0 auto",
+        background: "#fff",
+        borderRadius: 12,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+        padding: "1rem",
+        width: "100%",
+        boxSizing: "border-box",
+        minWidth: 0,
+      }}
+    >
+      <button
+        onClick={() => navigate("/")}
+        style={{
+          marginBottom: 16,
+          marginTop: 48, // Add this line
+          background: "#ff5330",
+          color: "#fff",
+          border: "none",
+          borderRadius: 6,
+          padding: "8px 16px",
+          cursor: "pointer",
+        }}
+      >
             ← Back
           </button>
 
@@ -355,13 +365,13 @@ const AlertDetails: React.FC = () => {
                     userId: alert.userId || alert.user?.email || '',
                   });
 
+                  // Send email notification to the mobile user who created the alert
                   const emailSent = await sendReplyEmailToUser({
                     alertId: id,
                     responderName: reply.responderName,
                     station: reply.station,
                     message: reply.message,
-                    serviceType: alert.serviceType,
-                    alertCreatorEmail: alert.user?.email || alert.email || '',
+                    serviceType: alert.serviceType
                   });
 
                   if (notificationSent && emailSent) {

@@ -3,7 +3,6 @@ import { db } from "../services/firebase";
 import {
   collection,
   query,
-  where,
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
@@ -26,31 +25,115 @@ interface Alert {
 const History: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [serviceType, setServiceType] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedType = localStorage.getItem("serviceType");
+    console.log("🔍 Retrieved serviceType from localStorage:", storedType);
     setServiceType(storedType);
   }, []);
 
   useEffect(() => {
-    if (!serviceType) return;
-    const q = query(
-      collection(db, "alerts"),
-      where("serviceType", "==", serviceType)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      setAlerts(
-        snapshot.docs.map((doc) => ({
-          ...(doc.data() as Alert),
-          id: doc.id,
-        }))
+    if (!serviceType) {
+      console.log("❌ No serviceType found, setting loading to false");
+      setLoading(false);
+      return;
+    }
+    
+    console.log("🔍 Fetching alerts for serviceType:", serviceType);
+    setLoading(true);
+    
+    // Clean serviceType to remove any quotes or extra characters
+    const cleanServiceType = serviceType.replace(/['"]/g, '').trim().toLowerCase();
+    console.log("🧹 Cleaned serviceType for history:", cleanServiceType);
+    
+    // First, let's check what serviceTypes are actually in the database
+    const allAlertsQuery = query(collection(db, "alerts"));
+    const tempUnsub = onSnapshot(allAlertsQuery, (tempSnapshot) => {
+      const allAlerts = tempSnapshot.docs.map(doc => ({ 
+        ...(doc.data() as Alert), 
+        id: doc.id 
+      }));
+      
+      console.log("📊 HISTORY DEBUG: All alerts in database:", allAlerts.length);
+      console.log("📊 HISTORY DEBUG: ServiceTypes found:", allAlerts.map(a => `"${a.serviceType}"`));
+      console.log("📊 HISTORY DEBUG: User serviceType:", `"${serviceType}"`);
+      console.log("📊 HISTORY DEBUG: Cleaned serviceType:", `"${cleanServiceType}"`);
+      
+      // Try multiple matching strategies
+      const exactMatch = allAlerts.filter(alert => alert.serviceType === serviceType);
+      const cleanMatch = allAlerts.filter(alert => alert.serviceType === cleanServiceType);
+      const caseInsensitiveMatch = allAlerts.filter(alert => 
+        alert.serviceType?.toString().toLowerCase().trim() === cleanServiceType
       );
+      
+      console.log(`📊 HISTORY DEBUG: Exact match (${serviceType}):`, exactMatch.length);
+      console.log(`📊 HISTORY DEBUG: Clean match (${cleanServiceType}):`, cleanMatch.length);
+      console.log(`📊 HISTORY DEBUG: Case insensitive match:`, caseInsensitiveMatch.length);
+      
+      // Use the best match
+      let matchingAlerts = caseInsensitiveMatch.length > 0 ? caseInsensitiveMatch :
+                          cleanMatch.length > 0 ? cleanMatch :
+                          exactMatch;
+      
+      // TEMPORARY: If no matches found, show all alerts for debugging
+      if (matchingAlerts.length === 0) {
+        console.log("⚠️ HISTORY TEMPORARY: No matches found, showing all alerts for debugging");
+        matchingAlerts = allAlerts;
+      }
+      
+      console.log(`📊 HISTORY DEBUG: Using ${matchingAlerts.length} alerts`);
+      
+      setAlerts(matchingAlerts);
+      setLoading(false);
+      tempUnsub(); // Cleanup this temporary listener
     });
-    return () => unsub();
+    
+    return () => {
+      if (tempUnsub) tempUnsub();
+    };
   }, [serviceType]);
 
+  if (loading) {
+    return (
+      <div style={{ 
+        maxWidth: 900, 
+        margin: "0 auto", 
+        padding: "1rem",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "60vh"
+      }}>
+        <div style={{
+          width: "50px",
+          height: "50px",
+          border: "4px solid #f3f3f3",
+          borderTop: "4px solid #ff5330",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite",
+          marginBottom: "20px"
+        }}></div>
+        <p style={{ 
+          color: "#121a68", 
+          fontSize: "1.1em",
+          textAlign: "center"
+        }}>
+          Loading alert history...
+        </p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "1rem" }}>
+    <div style={{ width: "100%", margin: "0 auto", padding: "1rem" }}>
       <h2
         style={{
           color: "#121a68",
@@ -155,7 +238,29 @@ const History: React.FC = () => {
       </div>
       {/* Mobile Card/List Layout */}
       <div className="alert-history-mobile-list">
-        {alerts.map((alert) => (
+        {alerts.length === 0 ? (
+          <div style={{
+            textAlign: "center",
+            padding: "3rem 1rem",
+            color: "#6b7280",
+            fontSize: "1.1em"
+          }}>
+            <div style={{
+              fontSize: "3rem",
+              marginBottom: "1rem",
+              color: "#d1d5db"
+            }}>
+              📋
+            </div>
+            <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>
+              No Alert History Found
+            </p>
+            <p style={{ fontSize: "0.9em" }}>
+              All alert histories for your service will appear here once they arrive.
+            </p>
+          </div>
+        ) : (
+          alerts.map((alert) => (
           <div
             key={alert.id}
             className="alert-history-mobile-card"
@@ -197,7 +302,8 @@ const History: React.FC = () => {
               </div>
             )}
           </div>
-        ))}
+        ))
+        )}
       </div>
     </div>
   );

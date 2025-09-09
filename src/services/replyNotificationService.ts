@@ -1,6 +1,7 @@
 // Service for sending push notifications to mobile app when replies are sent from web dashboard
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import { getServiceProvidersByType, getAllMobileUsers } from './userValidationService';
 
 interface ReplyNotificationData {
   alertId: string;
@@ -158,7 +159,7 @@ export async function notifyServiceEmail(alertData: {
     // Generate unique alert ID for duplicate prevention
     const alertId = `alert-${Date.now()}-${alertData.userName}-${alertData.serviceType}`;
     
-    const response = await fetch('http://localhost:3001/api/send-alert-email', {
+    const response = await fetch('http://localhost:3002/api/send-alert-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

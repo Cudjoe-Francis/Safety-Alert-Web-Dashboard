@@ -20,14 +20,14 @@ export interface AlertEmailData {
   }>;
 }
 
-// Email configuration
-const EMAIL_CONFIG = {
-  service: 'gmail',
-  auth: {
-    user: 'safety.alert.app@gmail.com',
-    pass: 'gjxoeixzyoxacyac'
-  }
-};
+// Email configuration (used by email server)
+// const EMAIL_CONFIG = {
+//   service: 'gmail',
+//   auth: {
+//     user: 'safety.alert.app@gmail.com',
+//     pass: 'gjxoeixzyoxacyac'
+//   }
+// };
 
 // Service-specific email addresses - these should be the actual service provider emails
 const SERVICE_EMAILS = {
@@ -48,18 +48,32 @@ export async function sendAlertEmail(alertData: AlertEmailData, alertId?: string
     // Generate unique alert ID if not provided
     const uniqueAlertId = alertId || `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    const response = await fetch('http://localhost:3001/api/send-alert-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: getServiceEmail(alertData.serviceType),
-        subject: `🚨 URGENT: Emergency Alert - ${alertData.serviceType.toUpperCase()}`,
-        html: generateEmailHTML(alertData),
-        alertId: uniqueAlertId, // Include alert ID for duplicate prevention
-      }),
-    });
+    // Try to send via email server first, fallback to simulation if server unavailable
+    let response;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
+      response = await fetch('http://localhost:3002/api/send-alert-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: getServiceEmail(alertData.serviceType),
+          subject: `🚨 URGENT: Emergency Alert - ${alertData.serviceType.toUpperCase()}`,
+          html: generateEmailHTML(alertData),
+          alertId: uniqueAlertId,
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+    } catch (fetchError) {
+      console.log('📧 Email server not available, using fallback notification');
+      simulateEmailNotification(alertData);
+      return true;
+    }
 
     if (response.ok) {
       console.log(`✅ Emergency alert email sent to ${alertData.serviceType} (ID: ${uniqueAlertId})`);
@@ -173,6 +187,66 @@ function generateEmailHTML(alertData: AlertEmailData): string {
     </body>
     </html>
   `;
+}
+
+// Function to send reply notification email to alert creator
+export async function sendReplyEmailToUser({
+  alertId,
+  responderName,
+  station,
+  message,
+  serviceType,
+  alertCreatorEmail
+}: {
+  alertId: string;
+  responderName: string;
+  station?: string;
+  message: string;
+  serviceType: string;
+  alertCreatorEmail?: string;
+}): Promise<boolean> {
+  try {
+    // If no email provided, we can't send the notification
+    if (!alertCreatorEmail) {
+      console.warn('⚠️ No alert creator email provided for reply notification');
+      return false;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch('http://localhost:3002/api/send-reply-notification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        alertCreatorEmail,
+        responderName,
+        station,
+        message,
+        serviceType,
+        alertId
+      }),
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`✅ Reply notification email sent to alert creator: ${alertCreatorEmail}`);
+      console.log(`📧 Message ID: ${result.messageId}`);
+      return true;
+    } else {
+      const errorData = await response.json();
+      console.error(`❌ Failed to send reply notification email: ${errorData.error}`);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Error sending reply notification email:', error);
+    return false;
+  }
 }
 
 // Fallback function for client-side email simulation

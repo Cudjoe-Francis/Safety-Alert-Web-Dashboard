@@ -5,7 +5,8 @@ import { auth, db } from "../services/firebase";
 import { Link, useNavigate } from "react-router-dom";
 import Popup from "../components/Popup";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-import bgImage from "../assets/Safety_Alert_Dashboard_Background.jpg"; // Add this import at the top
+import bgImage from "../assets/Safety_Alert_Dashboard_Background.jpg";
+import { validateLogin } from "../services/userValidationService";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +17,16 @@ const SignIn: React.FC = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     try {
+      // First validate if user can login on web dashboard
+      const loginValidation = await validateLogin(email, 'web_dashboard');
+      
+      if (!loginValidation.isValid) {
+        setPopupMsg(loginValidation.message);
+        return;
+      }
+      
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
@@ -28,7 +38,7 @@ const SignIn: React.FC = () => {
       }
       navigate("/");
     } catch (err: any) {
-      console.log("Firebase sign-in error:", err); // Add this line for debugging
+      console.log("Firebase sign-in error:", err);
       if (err.code === "auth/user-not-found") {
         setPopupMsg("No account found with this email. Please sign up first.");
       } else if (err.code === "auth/wrong-password") {

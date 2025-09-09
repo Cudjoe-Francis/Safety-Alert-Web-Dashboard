@@ -12,26 +12,26 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "./services/firebase";
 import { initializeAlertSystem } from "./services/newAlertTracker";
+import { useAuthGuard } from "./hooks/useAuthGuard";
+import { ToastProvider, useToast } from "./hooks/useToast";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import AlertDetails from "./pages/AlertDetails";
 import History from "./pages/History";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
+import './App.css';
+import './styles/toast.css';
 import logo from "../src/assets/Safety_Alert_App_Logo.jpg"; // Use your actual logo file name
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  const { showToast } = useToast();
+  const { loading, isAuthenticated } = useAuthGuard({
+    redirectTo: '/signin',
+    showToast
+  });
 
   if (loading) {
     return (
@@ -48,7 +48,7 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
@@ -122,20 +122,22 @@ const App: React.FC = () => {
   };
 
   return (
+    <ErrorBoundary>
     <Router>
-      <Routes>
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route
-          path="/*"
-          element={
-            <RequireAuth>
+      <ToastProvider>
+        <Routes>
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route
+            path="/*"
+            element={
+              <RequireAuth>
               <div
                 style={{
                   display: "flex",
                   minHeight: "100vh",
-                  width: "100vw",
+                  width: "100%",
                   background: "#f7f8fa",
                   position: "relative",
                 }}
@@ -154,7 +156,6 @@ const App: React.FC = () => {
                     borderRadius: 8,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.09)",
                     padding: 8,
-                    display: "none",
                   }}
                   onClick={() => setMenuOpen((open) => !open)}
                   aria-label="Open navigation"
@@ -183,14 +184,15 @@ const App: React.FC = () => {
                   className={`sidebar${menuOpen ? " open" : ""}`}
                   style={{
                     width: 220,
-                    minWidth: 180,
+                    minWidth: 220,
                     background: "#fff",
                     borderRight: `1px solid #e0e0e0`,
                     padding: "2rem 1rem",
                     boxShadow: "2px 0 8px rgba(0,0,0,0.07)",
                     height: "100vh",
-                    position: "sticky",
+                    position: "fixed",
                     top: 0,
+                    left: 0,
                     boxSizing: "border-box",
                     transition: "left 0.3s",
                     zIndex: 2000,
@@ -294,7 +296,13 @@ const App: React.FC = () => {
                   </button>
                 </nav>
                 {/* Main Content */}
-                <main style={{ flex: 1, padding: "2rem", width: "100%" }}>
+                <main style={{ 
+                  flex: 1, 
+                  padding: "2rem", 
+                  marginLeft: "220px",
+                  width: "calc(100% - 220px)",
+                  minHeight: "100vh"
+                }}>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/alert/:id" element={<AlertDetails />} />
@@ -383,7 +391,9 @@ const App: React.FC = () => {
           }
         />
       </Routes>
+      </ToastProvider>
     </Router>
+    </ErrorBoundary>
   );
 };
 

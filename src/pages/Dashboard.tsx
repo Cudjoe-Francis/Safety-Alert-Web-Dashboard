@@ -1,13 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import { collection, onSnapshot, query, doc, getDoc, Timestamp } from "firebase/firestore";
+import { db, auth } from "../services/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { db } from "../services/firebase";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  Timestamp,
-} from "firebase/firestore";
+import { sendEmailToAllServiceUsers } from "../services/serviceTypeEmailService";
 
 interface Location {
   address?: string;
@@ -47,6 +43,7 @@ interface Alert {
   lat?: number;
   lng?: number;
   user?: UserDetails;
+  userEmail?: string;
   emergencyContacts?: EmergencyContact[];
 }
 
@@ -55,52 +52,104 @@ const Dashboard: React.FC = () => {
   const [serviceType, setServiceType] = useState<string | null>(null);
   const [openedAlerts, setOpenedAlerts] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [processedAlerts, setProcessedAlerts] = useState<string[]>([]);
   const navigate = useNavigate();
 
+  // Check authentication and get user data
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "alerts"), (snapshot) => {
-      setAlerts(
-        snapshot.docs.map((doc) => ({
-          ...(doc.data() as Alert),
-          id: doc.id,
-        }))
-      );
+    const unsubAuth = onAuthStateChanged(auth, async (currentUser) => {
+      console.log("🔐 Auth state changed:", currentUser?.email);
+      
+      if (!currentUser) {
+        console.log("❌ No user logged in - redirecting to signin");
+        navigate("/signin");
+        return;
+      }
+
+      
+      // Get user document to get serviceType
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log("👤 User data:", userData);
+          console.log("🏷️ User serviceType:", userData.serviceType);
+          
+          // Save to localStorage and state
+          localStorage.setItem("serviceType", userData.serviceType);
+          setServiceType(userData.serviceType);
+        } else {
+          console.log("❌ User document not found");
+        }
+      } catch (error) {
+        console.error("❌ Error fetching user data:", error);
+      }
     });
-    return () => unsub();
-  }, []);
 
-  useEffect(() => {
-    const storedType = localStorage.getItem("serviceType");
-    setServiceType(storedType);
-  }, []);
+    return () => unsubAuth();
+  }, [navigate]);
 
+  // Fetch and filter alerts
   useEffect(() => {
-    console.log("serviceType:", serviceType);
-    if (!serviceType) return;
-    const q = query(
-      collection(db, "alerts"),
-      where("serviceType", "==", serviceType)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      const newAlerts = snapshot.docs.map((doc) => ({
-        ...(doc.data() as Alert),
-        id: doc.id,
+    if (!serviceType) {
+      console.log("⏳ Waiting for serviceType...");
+      return;
+    }
+    
+    console.log("🔍 Fetching alerts for serviceType:", serviceType);
+    
+    // Clean serviceType to remove any quotes or extra characters
+    const cleanServiceType = serviceType.replace(/['"]/g, '').trim().toLowerCase();
+    console.log("🧹 Cleaned serviceType:", cleanServiceType);
+    
+    // Fetch all alerts and filter them
+    const allAlertsQuery = query(collection(db, "alerts"));
+    const unsub = onSnapshot(allAlertsQuery, (snapshot) => {
+      const allAlerts = snapshot.docs.map(doc => ({ 
+        ...(doc.data() as Alert), 
+        id: doc.id 
       }));
       
-      // Only track new alerts, don't send emails automatically
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === "added" && !processedAlerts.includes(change.doc.id)) {
-          // Mark this alert as processed to prevent re-processing
-          setProcessedAlerts(prev => [...prev, change.doc.id]);
-          console.log(`📋 New alert detected: ${change.doc.id}`);
+      // Check for new alerts and send email notifications
+      snapshot.docChanges().forEach(async (change) => {
+        if (change.type === "added") {
+          const newAlert = { ...(change.doc.data() as Alert), id: change.doc.id };
+          console.log(`🚨 New alert detected: ${newAlert.serviceType} - ${newAlert.userName}`);
+          
+          // Send email notification to all users with matching service type
+          try {
+            await sendEmailToAllServiceUsers({
+              serviceType: newAlert.serviceType,
+              userName: newAlert.userName,
+              location: typeof newAlert.location === 'string' ? newAlert.location : newAlert.location?.address || 'Location provided',
+              time: typeof newAlert.time === 'object' && 'toDate' in newAlert.time ? newAlert.time.toDate().toLocaleString() : newAlert.time?.toString() || new Date().toLocaleString(),
+              message: newAlert.message || '',
+              alertId: newAlert.id
+            });
+            console.log(`✅ Email notifications sent for ${newAlert.serviceType} alert`);
+          } catch (error) {
+            console.error(`❌ Failed to send email notifications for alert ${newAlert.id}:`, error);
+          }
         }
       });
       
-      setAlerts(newAlerts);
+      // Try multiple matching strategies
+      const exactMatch = allAlerts.filter(alert => alert.serviceType === serviceType);
+      const cleanMatch = allAlerts.filter(alert => alert.serviceType === cleanServiceType);
+      const caseInsensitiveMatch = allAlerts.filter(alert => 
+        alert.serviceType?.toString().toLowerCase().trim() === cleanServiceType
+      );
+      
+      // Use the best match
+      let matchingAlerts = caseInsensitiveMatch.length > 0 ? caseInsensitiveMatch :
+                          cleanMatch.length > 0 ? cleanMatch :
+                          exactMatch;
+      
+      console.log(`📊 Found ${matchingAlerts.length} matching alerts`);
+      setAlerts(matchingAlerts);
     });
+    
     return () => unsub();
-  }, [serviceType, processedAlerts]);
+  }, [serviceType]);
 
   useEffect(() => {
     // Load opened alerts from localStorage
@@ -117,32 +166,37 @@ const Dashboard: React.FC = () => {
     navigate(`/alert/${id}`);
   };
 
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Simulate a short delay for UX (remove if you want instant)
-    setTimeout(() => {
-      // This will re-trigger the Firestore listener by updating state
-      // If you want to force a re-fetch, you can re-run the query manually:
-      const q = query(
-        collection(db, "alerts"),
-        where("serviceType", "==", serviceType)
-      );
-      onSnapshot(q, (snapshot) => {
-        setAlerts(
-          snapshot.docs.map((doc) => ({
-            ...(doc.data() as Alert),
-            id: doc.id,
-          }))
+    
+    // Simple refresh - just re-trigger the useEffect
+    if (serviceType) {
+      const cleanServiceType = serviceType.replace(/['"]/g, '').trim().toLowerCase();
+      
+      const allAlertsQuery = query(collection(db, "alerts"));
+      const tempUnsub = onSnapshot(allAlertsQuery, (snapshot) => {
+        const allAlerts = snapshot.docs.map(doc => ({ 
+          ...(doc.data() as Alert), 
+          id: doc.id 
+        }));
+        
+        // Filter alerts for this service
+        const matchingAlerts = allAlerts.filter(alert => 
+          alert.serviceType?.toString().toLowerCase().trim() === cleanServiceType
         );
+        
+        setAlerts(matchingAlerts);
         setRefreshing(false);
+        tempUnsub();
       });
-    }, 800); // 800ms for activity indicator
+    } else {
+      setRefreshing(false);
+    }
   };
 
-  const responderServiceType = serviceType;
-  const filteredAlerts = alerts.filter(
-    (alert) => alert.serviceType === responderServiceType
-  );
+  // Alerts are already filtered in useEffect, no need to filter again
+  const filteredAlerts = alerts;
 
   const sortedAlerts = [...filteredAlerts].sort((a, b) => {
     const timeA =
@@ -158,63 +212,63 @@ const Dashboard: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "1rem" }}>
-      <div
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 24,
+        marginTop: 56,
+      }}
+    >
+      <h2
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 24,
-          marginTop: 56,
+          color: "#121a68",
+          fontSize: "1.3em",
+          margin: 0,
         }}
       >
-        <h2
-          style={{
-            color: "#121a68",
-            fontSize: "1.3em",
-            margin: 0,
-          }}
-        >
-          Incoming Alerts
-        </h2>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          style={{
-            background: "#f3f4f6",
-            color: "#ff5330",
-            border: "none",
-            borderRadius: 8,
-            padding: "8px 18px",
-            fontWeight: 600,
-            fontSize: "1em",
-            cursor: refreshing ? "not-allowed" : "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-            marginLeft: 16,
-            width: "fit-content",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            opacity: refreshing ? 0.7 : 1,
-          }}
-          title="Refresh dashboard"
-        >
-          {refreshing ? (
-            <span
-              style={{
-                display: "inline-block",
-                width: 18,
-                height: 18,
-                border: "2px solid #ff5330",
-                borderTop: "2px solid #f3f4f6",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
-              }}
-            />
-          ) : (
-            "Refresh"
-          )}
-        </button>
-      </div>
+        Incoming Alerts
+      </h2>
+      <button
+        onClick={handleRefresh}
+        disabled={refreshing}
+        style={{
+          background: "#f3f4f6",
+          color: "#ff5330",
+          border: "none",
+          borderRadius: 8,
+          padding: "8px 18px",
+          fontWeight: 600,
+          fontSize: "1em",
+          cursor: refreshing ? "not-allowed" : "pointer",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+          marginLeft: 16,
+          width: "fit-content",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          opacity: refreshing ? 0.7 : 1,
+        }}
+        title="Refresh dashboard"
+      >
+        {refreshing ? (
+          <span
+            style={{
+              display: "inline-block",
+              width: 18,
+              height: 18,
+              border: "2px solid #ff5330",
+              borderTop: "2px solid #f3f4f6",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+        ) : (
+          "Refresh"
+        )}
+      </button>
+    </div>
 
       {/* Desktop Card Grid */}
       <div
@@ -418,6 +472,7 @@ const Dashboard: React.FC = () => {
           ))
         )}
       </div>
+
     </div>
   );
 };
