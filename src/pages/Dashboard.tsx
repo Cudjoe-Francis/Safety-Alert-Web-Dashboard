@@ -45,6 +45,8 @@ interface Alert {
   user?: UserDetails;
   userEmail?: string;
   emergencyContacts?: EmergencyContact[];
+  email?: string;
+  userId?: string;
 }
 
 const Dashboard: React.FC = () => {
@@ -117,7 +119,7 @@ const Dashboard: React.FC = () => {
           
           // Send email notification to all users with matching service type
           try {
-            await sendEmailToAllServiceUsers({
+            await sendEmailToAllServiceUsers(newAlert.serviceType, {
               serviceType: newAlert.serviceType,
               userName: newAlert.userName,
               location: typeof newAlert.location === 'string' ? newAlert.location : newAlert.location?.address || 'Location provided',
@@ -128,6 +130,22 @@ const Dashboard: React.FC = () => {
             console.log(`✅ Email notifications sent for ${newAlert.serviceType} alert`);
           } catch (error) {
             console.error(`❌ Failed to send email notifications for alert ${newAlert.id}:`, error);
+          }
+
+          // Send confirmation email to the alert requester
+          try {
+            const { sendConfirmationEmail } = await import('../services/confirmationEmailService');
+            await sendConfirmationEmail({
+              userEmail: newAlert.user?.email || newAlert.email || '',
+              userName: newAlert.userName,
+              serviceType: newAlert.serviceType,
+              alertId: newAlert.id,
+              location: typeof newAlert.location === 'string' ? newAlert.location : newAlert.location?.address || 'Location provided',
+              time: typeof newAlert.time === 'object' && 'toDate' in newAlert.time ? newAlert.time.toDate().toLocaleString() : newAlert.time?.toString() || new Date().toLocaleString()
+            });
+            console.log(`✅ Confirmation email sent to alert requester: ${newAlert.user?.email || newAlert.email}`);
+          } catch (error) {
+            console.error(`❌ Failed to send confirmation email for alert ${newAlert.id}:`, error);
           }
         }
       });

@@ -9,22 +9,16 @@ const PORT = 3002;
 app.use(cors());
 app.use(express.json());
 
-
 const emailTracker = new Map();
 const EMAIL_COOLDOWN = 30000; // 30 seconds cooldown between same emails
 const processedRequests = new Set(); // Track processed requests to prevent loops
 
 // Email configuration
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
+  service: 'gmail',
   auth: {
     user: 'safety.alert.app@gmail.com',
     pass: 'gjxoeixzyoxacyac'
-  },
-  tls: {
-    rejectUnauthorized: false
   }
 });
 
@@ -60,17 +54,23 @@ async function getServiceProviderEmails(serviceType) {
     
     querySnapshot.forEach((doc) => {
       const userData = doc.data();
-      console.log(`👤 Found user: ${doc.id}, serviceType: "${userData.serviceType}", email: ${userData.email}`);
+      
+      // ONLY process users that are web dashboard service providers
+      if (userData.platform !== "web_dashboard") {
+        return;
+      }
+      
+      if (userData.userType !== "service_provider") {
+        return;
+      }
       
       // ONLY process users that have a serviceType field
       if (!userData.serviceType) {
-        console.log(`⚠️ Skipping user ${userData.email} - no serviceType field found`);
         return;
       }
       
       // ONLY process users that have an email
       if (!userData.email) {
-        console.log(`⚠️ Skipping user ${doc.id} - no email field found`);
         return;
       }
       
@@ -80,13 +80,10 @@ async function getServiceProviderEmails(serviceType) {
       
       if (userServiceType === targetServiceType) {
         emails.push(userData.email);
-        console.log(`✅ Added ${userData.email} - serviceType "${userData.serviceType}" matches "${serviceType}"`);
-      } else {
-        console.log(`❌ Skipped ${userData.email} - serviceType "${userData.serviceType}" doesn't match "${serviceType}"`);
       }
     });
     
-    console.log(`✅ Found ${emails.length} ${serviceType} dashboard users: ${emails.join(', ')}`);
+    console.log(`✅ Found ${emails.length} ${serviceType} service providers`);
     return emails;
   } catch (error) {
     console.error(`❌ Error fetching ${serviceType} dashboard users:`, error);
@@ -108,7 +105,7 @@ function generateRequestId(serviceType, alertData, userEmails) {
 // API endpoint to send alert emails
 app.post('/api/send-alert-email', async (req, res) => {
   try {
-    const { to, subject, html, alertId, serviceType, recipientEmail: userEmail } = req.body;
+    const { to, subject, html, alertId, serviceType, recipientEmail: userEmail, alertData } = req.body;
     
     // Generate unique identifier for this email
     const emailId = generateEmailId(to, subject, alertId);
@@ -147,7 +144,7 @@ app.post('/api/send-alert-email', async (req, res) => {
       };
       
       const info = await transporter.sendMail(mailOptions);
-      console.log(`✅ ${serviceType} email sent to ${userEmail} (${info.messageId})`);
+      console.log(`✅ ${serviceType} email sent successfully`);
       
       return res.status(200).json({ 
         success: true, 
@@ -159,14 +156,14 @@ app.post('/api/send-alert-email', async (req, res) => {
       const dashboardUsers = await getServiceProviderEmails(serviceType);
       
       if (dashboardUsers.length === 0) {
-        console.log(`⚠️ No ${serviceType} dashboard users found in database`);
+        console.log(`⚠️ No ${serviceType} service providers found`);
         return res.status(404).json({ 
           success: false, 
-          error: `No ${serviceType} dashboard users found in database`
+          error: `No ${serviceType} service providers found`
         });
       }
       
-      console.log(`📧 Sending ${serviceType} alert notification to ${dashboardUsers.length} dashboard users`);
+      console.log(`📧 Sending ${serviceType} alert to ${dashboardUsers.length} service providers`);
       
       // Send email notifications to dashboard users
       const emailPromises = dashboardUsers.map(async (email) => {
@@ -194,7 +191,6 @@ app.post('/api/send-alert-email', async (req, res) => {
           const info = await transporter.sendMail(mailOptions);
           emailTracker.set(serviceEmailId, now);
           
-          console.log(`✅ Dashboard notification sent to ${email} (${info.messageId})`);
           return { email, success: true, messageId: info.messageId };
         } catch (error) {
           console.error(`❌ Failed to send dashboard notification to ${email}:`, error);
@@ -204,8 +200,18 @@ app.post('/api/send-alert-email', async (req, res) => {
       
       const results = await Promise.all(emailPromises);
       const successCount = results.filter(r => r.success).length;
+      const failedCount = results.length - successCount;
       
-      console.log(`📊 Dashboard notifications: ${successCount}/${dashboardUsers.length} successful`);
+      if (successCount > 0) {
+        console.log(`✅ ${serviceType} alerts sent to ${successCount} service providers`);
+      }
+      if (failedCount > 0) {
+        console.log(`❌ Failed to send to ${failedCount} service providers`);
+        // Show detailed errors only for failures
+        results.filter(r => !r.success).forEach(result => {
+          console.log(`❌ ${result.email}: ${result.error}`);
+        });
+      }
       
       return res.status(200).json({ 
         success: true, 
@@ -340,61 +346,75 @@ app.post('/api/send-service-notifications', async (req, res) => {
 // Function to generate HTML for service notification emails
 function generateServiceAlertHTML(alertData) {
   return `
-    <!DOCTYPE html>
     <html>
-    <head>
-      <meta charset="utf-8">
-      <title>New Emergency Alert</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { background: #ff5330; color: white; padding: 20px; text-align: center; }
-        .content { padding: 20px; }
-        .alert-info { background: #fff3f0; border-left: 4px solid #ff5330; padding: 15px; margin: 15px 0; }
-        .footer { background: #121a68; color: white; padding: 15px; text-align: center; font-size: 12px; }
-        .urgent { color: #ff5330; font-weight: bold; font-size: 18px; }
-          font-weight: bold;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>🚨 NEW EMERGENCY ALERT</h1>
-          <p class="urgent">IMMEDIATE ATTENTION REQUIRED</p>
+    <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
+      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; padding: 20px;">
+        <h1 style="color: #ff5330; text-align: center;">🚨 NEW EMERGENCY ALERT</h1>
+        <p style="color: #ff5330; font-weight: bold; font-size: 18px; text-align: center;">IMMEDIATE ATTENTION REQUIRED</p>
+        
+        <div style="background: #fff3f0; border-left: 4px solid #ff5330; padding: 15px; margin: 15px 0;">
+          <h2>Alert Details</h2>
+          <p><strong>Service Required:</strong> ${alertData.serviceType ? alertData.serviceType.toUpperCase() : 'EMERGENCY'}</p>
+          <p><strong>Person in Need:</strong> ${alertData.userName || 'Unknown'}</p>
+          <p><strong>Location:</strong> ${typeof alertData.location === 'string' ? alertData.location : alertData.location?.address || 'Location provided'}</p>
+          <p><strong>Time:</strong> ${alertData.time || new Date().toLocaleString()}</p>
+          ${alertData.message ? `<p><strong>Additional Message:</strong> ${alertData.message}</p>` : ''}
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
+          <p><strong>Action Required:</strong> Please sign in to the Safety Alert Dashboard to view full details and respond to this emergency alert.</p>
+          <p><strong>Dashboard URL:</strong> http://localhost:5173</p>
         </div>
         
-        <div class="content">
-          <div class="alert-info">
-            <h2>Alert Details</h2>
-            <p><strong>Service Required:</strong> ${serviceType.toUpperCase()}</p>
-            <p><strong>Person in Need:</strong> ${alertData.userName || 'Unknown'}</p>
-            <p><strong>Location:</strong> ${typeof alertData.location === 'string' ? alertData.location : alertData.location?.address || 'Location provided'}</p>
-            <p><strong>Time:</strong> ${alertData.time || new Date().toLocaleString()}</p>
-            ${alertData.message ? `<p><strong>Additional Message:</strong> ${alertData.message}</p>` : ''}
-          </div>
-
-          <div style="text-align: center; margin: 20px 0;">
-            <a href="http://localhost:5173/signin" class="cta-button">
-              Sign In to Respond
-            </a>
-          </div>
-
-          <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
-            <p><strong>⚠️ Action Required:</strong> Please sign in to the Safety Alert Dashboard to view full details and respond to this emergency alert.</p>
-            <p><strong>Dashboard URL:</strong> <a href="http://localhost:5173">http://localhost:5173</a></p>
-          </div>
-        </div>
-
-        <div class="footer">
-          <p>This is an automated emergency alert from Safety Alert System</p>
-          <p>Generated at: ${new Date().toLocaleString()}</p>
-        </div>
+        <p style="text-align: center; font-size: 12px; color: #666; margin-top: 20px;">
+          This is an automated emergency alert from Safety Alert System<br>
+          Generated at: ${new Date().toLocaleString()}
+        </p>
       </div>
     </body>
     </html>
   `;
 }
+
+// Test email endpoint for debugging
+app.post('/api/test-email', async (req, res) => {
+  try {
+    const { to, subject = 'Test Email from Safety Alert System' } = req.body;
+    
+    if (!to) {
+      return res.status(400).json({ success: false, error: 'Email address required' });
+    }
+    
+    const mailOptions = {
+      from: 'safety.alert.app@gmail.com',
+      to: to,
+      subject: subject,
+      html: `
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>🧪 Test Email</h2>
+          <p>This is a simple test email from the Safety Alert System.</p>
+          <p><strong>Sent to:</strong> ${to}</p>
+          <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+          <p>If you receive this email, the SMTP configuration is working correctly.</p>
+        </body>
+        </html>
+      `
+    };
+    
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Test email sent successfully`);
+    
+    res.json({ 
+      success: true, 
+      messageId: info.messageId
+    });
+    
+  } catch (error) {
+    console.error('❌ Test email failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
