@@ -103,26 +103,24 @@ const AlertDetails: React.FC = () => {
   useEffect(() => {
     if (!id) return;
     
-    const topLevelQuery = query(
-      collection(db, "replies"),
+    // Listen to the alert subcollection for replies instead of top-level collection
+    // This matches where we're now storing replies to prevent duplicates
+    const repliesQuery = query(
+      collection(db, "alerts", id, "replies"),
       orderBy("createdAt", "asc")
     );
     
-    const unsubTopLevel = onSnapshot(topLevelQuery, (snapshot) => {
-      const allReplies = snapshot.docs.map((doc) => ({
+    const unsubReplies = onSnapshot(repliesQuery, (snapshot) => {
+      const alertReplies = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Reply[];
-      
-      const alertReplies = allReplies.filter(reply => 
-        (reply as any).alertId === id
-      );
       
       setReplies(alertReplies);
     });
     
     return () => {
-      unsubTopLevel();
+      unsubReplies();
     };
   }, [id]);
 
@@ -338,21 +336,14 @@ const AlertDetails: React.FC = () => {
               onSend={async (reply) => {
                 if (!id) return;
                 try {
-                  // Store reply in both locations for compatibility
-                  await addDoc(collection(db, "replies"), {
-                    responderName: reply.responderName,
-                    station: reply.station,
-                    message: reply.message,
-                    createdAt: serverTimestamp(),
-                    alertId: id,
-                  });
-
-                  // Also store in alert subcollection for mobile notifications
+                  // Store reply ONLY in alert subcollection for mobile notifications
+                  // This prevents duplicate notifications by having a single source of truth
                   await addDoc(collection(db, "alerts", id, "replies"), {
                     responderName: reply.responderName,
                     station: reply.station,
                     message: reply.message,
                     time: serverTimestamp(),
+                    createdAt: serverTimestamp(),
                     alertId: id,
                   });
 
@@ -439,7 +430,7 @@ const AlertDetails: React.FC = () => {
                     }}
                     onClick={async () => {
                       if (!id) return;
-                      await deleteDoc(doc(db, "replies", reply.id));
+                      await deleteDoc(doc(db, "alerts", id, "replies", reply.id));
                     }}
                   >
                     Delete
